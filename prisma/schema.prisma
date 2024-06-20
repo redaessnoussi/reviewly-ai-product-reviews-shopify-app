@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+datasource db {
+  provider = "sqlite"
+  url      = "file:dev.sqlite"
+}
+
+model Session {
+  id          String    @id
+  shop        String
+  state       String
+  isOnline    Boolean   @default(false)
+  scope       String?
+  expires     DateTime?
+  accessToken String
+  userId      BigInt?
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  productId  String
+  comment    String
+  createdAt  DateTime @default(now())
+  firstName  String
+  lastName   String?
+  rating     Float
+  sentiment  String?
+  AiResponse String?
+  imageUrl   String?
+  videoUrl   String?
+  approved   Boolean  @default(false)
+}
+
+model Settings {
+  id                       Int     @id @unique @default(1)
+  shop                     String  @unique
+  enableSentimentAnalysis  Boolean @default(false)
+  enableAutomatedResponses Boolean @default(false)
+  allowMedia               Boolean @default(true)
+  reviewModeration         String  @default("none") // options: "none", "all", "negative"
+}

@@ -1,0 +1,205 @@
+<div class="reviews-section">
+  <div class="columns">
+    <div class="column">
+      <h2>Customer reviews</h2>
+      <div id="global-ratings">
+        <!-- Ratings distribution will be dynamically inserted here -->
+      </div>
+      <h3>Review this product</h3>
+      <p>Share your thoughts with other customers</p>
+      <button type="button" class="js-modal-trigger" data-target="open-modal">Write a customer review</button>
+    </div>
+    <div class="column">
+      <div id="reviews-list">
+        <!-- Reviews will be dynamically inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="open-modal">
+    <div class="modal-content">
+      <div class="box">
+        <form id="review-form">
+          <input type="hidden" id="product-id" value="{{ block.settings.product.id }}">
+          <label for="comment">Comments:</label>
+          <textarea id="comment" name="comment" required></textarea>
+          <label for="firstName">First Name:</label>
+          <input type="text" id="firstName" name="firstName" required>
+          <label for="lastName">Last Name:</label>
+          <input type="text" id="lastName" name="lastName">
+          <label for="rating">Rating:</label>
+          <input type="number" id="rating" name="rating" step="1" min="1" max="5" required>
+          <label for="image">Image:</label>
+          <input type="file" id="image" name="image" accept="image/*">
+          <label for="video">Video:</label>
+          <input type="file" id="video" name="video" accept="video/*">
+          <button type="submit">Submit Review</button>
+          <div id="loading" style="display:none;">Loading...</div>
+        </form>
+      </div>
+    </div>
+    <button class="modal-close is-large" aria-label="close">Close</button>
+  </div>
+</div>
+
+<script>
+  function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+  }
+
+  document.addEventListener('DOMContentLoaded', async function () {
+    const productId = document.getElementById('product-id').value;
+
+    const apiEndpoint = 'https://consent-dock-habits-achieve.trycloudflare.com';
+
+    // Fetch settings
+    const settingsResponse = await fetch(`${apiEndpoint}/api/settings`);
+    const settings = await settingsResponse.json();
+
+    const enableSentimentAnalysis = settings.enableSentimentAnalysis;
+    const enableAutomatedResponses = settings.enableAutomatedResponses;
+    const allowMedia = settings.allowMedia;
+
+    // Fetch global ratings
+    const fetchRatings = async () => {
+      const response = await fetch(`${apiEndpoint}/api/ratings?productId=${productId}`);
+      const data = await response.json();
+      const { totalReviews, ratingsDistribution } = data;
+
+      if (totalReviews) {
+        const globalRatings = document.getElementById('global-ratings');
+        globalRatings.innerHTML = `
+          <p>Total Reviews: ${totalReviews}</p>
+          <div>
+            ${ratingsDistribution
+              .map(
+                (rating, index) => `
+              <p>${5 - index} stars: ${rating.count} (${rating.percentage}%)</p>
+            `
+              )
+              .join('')}
+          </div>
+        `;
+      }
+    };
+
+    await fetchRatings();
+
+    // Fetch existing reviews
+    const fetchReviews = async () => {
+      const response = await fetch(`${apiEndpoint}/api/reviews?productId=${productId}`);
+      const reviews = await response.json();
+      const reviewsList = document.getElementById('reviews-list');
+      reviewsList.innerHTML = ''; // Clear the list before appending new reviews
+
+      if (reviews.length === 0) {
+        const noReviewsMessage = document.createElement('p');
+        noReviewsMessage.innerHTML = 'Be the first to <span class="no-reviews-message"> write a review</span>';
+        reviewsList.appendChild(noReviewsMessage);
+
+        noReviewsMessage.addEventListener('click', () => {
+          document.getElementById('open-modal').classList.add('is-active');
+        });
+      } else {
+        reviews.forEach((review) => {
+          const reviewElement = document.createElement('div');
+          reviewElement.className = 'box';
+          const reviewDate = new Date(review.createdAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
+          reviewElement.innerHTML = `
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+              <img src="https://via.placeholder.com/48" alt="Customer Avatar">
+              <div style="margin-left: 10px;">
+                <p>${review.firstName} ${review.lastName ? review.lastName : ''} | ${review.rating}</p>
+                <p>${reviewDate}</p>
+              </div>
+            </div>
+            ${review.imageUrl ? `<img src="${review.imageUrl}" alt="Review Image" />` : ''}
+            ${review.videoUrl ? `<video src="${review.videoUrl}" controls></video>` : ''}
+            <p>${review.comment}${
+            enableSentimentAnalysis && review.sentiment ? ` | ${capitalizeFirstLetter(review.sentiment)}` : ''
+          }</p>
+            ${enableAutomatedResponses && review.AiResponse ? `<p>${review.AiResponse}</p>` : ''}
+          `;
+          reviewsList.appendChild(reviewElement);
+        });
+      }
+    };
+
+    await fetchReviews();
+
+    // Handle form submission
+    document.getElementById('review-form').addEventListener('submit', async function (event) {
+      event.preventDefault();
+      const loading = document.getElementById('loading');
+      loading.style.display = 'block';
+
+      const formData = new FormData(this);
+
+      formData.append('productId', document.getElementById('product-id').value);
+
+      // Log FormData entries
+      {% comment %} for (const [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      } {% endcomment %}
+
+      if (!allowMedia) {
+        formData.delete('image');
+        formData.delete('video');
+      }
+
+      await fetch(`${apiEndpoint}/api/reviews`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      loading.style.display = 'none';
+      document.getElementById('review-form').reset();
+      document.getElementById('open-modal').classList.remove('is-active');
+      await fetchReviews(); // Refresh the reviews list
+      await fetchRatings(); // Refresh the ratings
+    });
+
+    // Open modal
+    document.querySelectorAll('.js-modal-trigger').forEach((trigger) => {
+      trigger.addEventListener('click', () => {
+        const modal = document.getElementById(trigger.dataset.target);
+        modal.classList.add('is-active');
+      });
+    });
+
+    // Close modal
+    document.querySelectorAll('.modal-close').forEach((closeButton) => {
+      closeButton.addEventListener('click', () => {
+        document.getElementById('open-modal').classList.remove('is-active');
+      });
+    });
+
+    // Conditionally show/hide media inputs
+    if (!allowMedia) {
+      document.querySelector('label[for="image"]').style.display = 'none';
+      document.querySelector('#image').style.display = 'none';
+      document.querySelector('label[for="video"]').style.display = 'none';
+      document.querySelector('#video').style.display = 'none';
+    }
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Product Reviews",
+  "target": "section",
+  "stylesheet": "style.css",
+  "settings": [
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Product",
+      "autofill": true
+    }
+  ]
+}
+{% endschema %}

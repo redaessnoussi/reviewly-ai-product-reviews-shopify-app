@@ -1,0 +1,29 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "6f355af6c9e006c8557d57d8c2566fcb"
+name = "rev-up"
+handle = "rev-up"
+application_url = "https://regards-lenders-ryan-camping.trycloudflare.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "quickstart-e1c43354.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+
+[auth]
+redirect_urls = [
+  "https://regards-lenders-ryan-camping.trycloudflare.com/auth/callback",
+  "https://regards-lenders-ryan-camping.trycloudflare.com/auth/shopify/callback",
+  "https://regards-lenders-ryan-camping.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-04"
+
+[pos]
+embedded = false
