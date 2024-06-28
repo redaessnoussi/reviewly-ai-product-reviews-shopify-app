@@ -2,12 +2,11 @@
 
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { authenticate } from "../shopify.server";
+// import { authenticate } from "../shopify.server";
 import prisma from "../db.server";
 import SettingsForm from "../components/Settings/SettingsForm";
 
 export const loader = async ({ request }) => {
-  await authenticate.admin(request);
   const settings = await prisma.settings.findFirst({ where: { id: 1 } });
 
   return json({ settings });

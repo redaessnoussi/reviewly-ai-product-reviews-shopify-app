@@ -21,6 +21,7 @@
       <div class="box">
         <form id="review-form">
           <input type="hidden" id="product-id" value="{{ block.settings.product.id }}">
+          <input type="hidden" id="shop-name" value="{{ shop.domain }}">
           <label for="comment">Comments:</label>
           <textarea id="comment" name="comment" required></textarea>
           <label for="firstName">First Name:</label>
@@ -48,9 +49,10 @@
   }
 
   document.addEventListener('DOMContentLoaded', async function () {
+    const shopName = document.getElementById('shop-name').value;
     const productId = document.getElementById('product-id').value;
 
-    const apiEndpoint = 'https://consent-dock-habits-achieve.trycloudflare.com';
+    const apiEndpoint = 'https://sandwich-held-yemen-practical.trycloudflare.com';
 
     // Fetch settings
     const settingsResponse = await fetch(`${apiEndpoint}/api/settings`);
@@ -140,6 +142,8 @@
       const formData = new FormData(this);
 
       formData.append('productId', document.getElementById('product-id').value);
+      formData.append('shopName', document.getElementById('shop-name').value);
+      
 
       // Log FormData entries
       {% comment %} for (const [key, value] of formData.entries()) {

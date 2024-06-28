@@ -7,30 +7,40 @@ import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import { authenticate } from "../shopify.server";
+import { BillingPlanProvider } from "../context/BillingPlanContext";
+import { getUserSubscriptionPlan } from "../utils/getUserSubscriptionPlan";
+import { isFeatureEnabled } from "../utils/isFeatureEnabled";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }) => {
+  // console.log("\n \n \n request 2 \n \n \n", request);
   await authenticate.admin(request);
+  const userPlan = await getUserSubscriptionPlan(request);
 
-  return json({ apiKey: process.env.SHOPIFY_API_KEY || "" });
+  return json({ apiKey: process.env.SHOPIFY_API_KEY || "", userPlan });
 };
 
 export default function App() {
-  const { apiKey } = useLoaderData();
+  const { apiKey, userPlan } = useLoaderData();
+
+  console.log("12 userPlan", userPlan);
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
-      <NavMenu>
-        <Link to="/app" rel="home">
-          Home
-        </Link>
-        <Link to="/app/manage-reviews">Manage Reviews</Link>
-        <Link to="/app/import-export-reviews">Import/Export Reviews</Link>
-        <Link to="/app/settings">Settings</Link>
-        <Link to="/app/pricing">Pricing</Link>
-      </NavMenu>
-      <Outlet />
+      <BillingPlanProvider value={userPlan}>
+        <NavMenu>
+          <Link to="/app" rel="home">
+            Home
+          </Link>
+          <Link to="/app/dashboard">Dashbaord</Link>
+          <Link to="/app/manage-reviews">Manage Reviews</Link>
+          <Link to="/app/import-export-reviews">Import/Export Reviews</Link>
+          <Link to="/app/settings">Settings</Link>
+          <Link to="/app/pricing">Pricing</Link>
+        </NavMenu>
+        <Outlet />
+      </BillingPlanProvider>
     </AppProvider>
   );
 }

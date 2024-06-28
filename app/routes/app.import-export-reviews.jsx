@@ -15,8 +15,14 @@ import {
 } from "@shopify/polaris";
 import { useFetcher } from "@remix-run/react";
 import { NoteIcon } from "@shopify/polaris-icons";
+import { useBillingPlan } from "../context/BillingPlanContext";
+import { isFeatureEnabled } from "../utils/isFeatureEnabled";
+
+// export const loader = protectedLoader;
 
 export default function ImportExportReviews() {
+  const billingPlan = useBillingPlan();
+
   const fetcher = useFetcher();
   const [selectedProduct, setSelectedProduct] = useState("");
   const [fields, setFields] = useState([
@@ -145,56 +151,59 @@ export default function ImportExportReviews() {
     setProgress(100);
   };
 
-  return (
-    <Page title="Import/Export Reviews">
-      <Card sectioned>
-        <FormLayout>
-          {message && (
-            <Banner
-              title={message}
-              tone={messageStatus == "critical" ? "warning" : "success"}
-            />
-          )}
-          <Select
-            label="Select Product"
-            options={productOptions}
-            onChange={setSelectedProduct}
-            value={selectedProduct}
-          />
-          <Button
-            primary
-            onClick={handleExport}
-            disabled={loading || reviewsCount === 0}
-          >
-            Export Reviews ({reviewsCount} reviews)
-          </Button>
-          <DropZone accept=".csv" onDrop={handleDrop}>
-            {file ? (
-              <LegacyStack>
-                <Thumbnail size="small" alt={file.name} source={NoteIcon} />
-                <div>
-                  {file.name}{" "}
-                  <Text variant="bodySm" as="p">
-                    {file.size} bytes
-                  </Text>
-                </div>
-              </LegacyStack>
-            ) : (
-              <DropZone.FileUpload />
+  if (!isFeatureEnabled(billingPlan, "Review Export/Import")) {
+    return <div>Feature not available for your plan. Please upgrade.</div>;
+  } else
+    return (
+      <Page title="Import/Export Reviews">
+        <Card sectioned>
+          <FormLayout>
+            {message && (
+              <Banner
+                title={message}
+                tone={messageStatus == "critical" ? "warning" : "success"}
+              />
             )}
-          </DropZone>
-          <Link
-            url="https://docs.google.com/spreadsheets/d/1awNIYVyFSPT63HhppPcnHp1mhc2DaKVtcUYffR3FjgU/edit?gid=0#gid=0"
-            target="_blank"
-          >
-            Download Sample CSV
-          </Link>
-          <Button onClick={handleImport} disabled={loading}>
-            Import Reviews
-          </Button>
-          {loading && <ProgressBar progress={progress} />}
-        </FormLayout>
-      </Card>
-    </Page>
-  );
+            <Select
+              label="Select Product"
+              options={productOptions}
+              onChange={setSelectedProduct}
+              value={selectedProduct}
+            />
+            <Button
+              primary
+              onClick={handleExport}
+              disabled={loading || reviewsCount === 0}
+            >
+              Export Reviews ({reviewsCount} reviews)
+            </Button>
+            <DropZone accept=".csv" onDrop={handleDrop}>
+              {file ? (
+                <LegacyStack>
+                  <Thumbnail size="small" alt={file.name} source={NoteIcon} />
+                  <div>
+                    {file.name}{" "}
+                    <Text variant="bodySm" as="p">
+                      {file.size} bytes
+                    </Text>
+                  </div>
+                </LegacyStack>
+              ) : (
+                <DropZone.FileUpload />
+              )}
+            </DropZone>
+            <Link
+              url="https://docs.google.com/spreadsheets/d/1awNIYVyFSPT63HhppPcnHp1mhc2DaKVtcUYffR3FjgU/edit?gid=0#gid=0"
+              target="_blank"
+            >
+              Download Sample CSV
+            </Link>
+            <Button onClick={handleImport} disabled={loading}>
+              Import Reviews
+            </Button>
+            {loading && <ProgressBar progress={progress} />}
+          </FormLayout>
+        </Card>
+      </Page>
+    );
 }

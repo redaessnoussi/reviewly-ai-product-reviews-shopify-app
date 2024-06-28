@@ -12,15 +12,22 @@ import {
 } from "@shopify/polaris";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { authenticate, MONTHLY_PLAN, ANNUAL_PLAN } from "../shopify.server";
+import {
+  authenticate,
+  BASIC_PLAN,
+  STANDARD_PLAN,
+  PREMIUM_PLAN,
+} from "../shopify.server";
 import { NoteIcon } from "@shopify/polaris-icons";
+import { setSubscriptionPlan } from "../utils/subscriptionPlan";
 
 export async function loader({ request }) {
-  const { billing } = await authenticate.admin(request);
+  const { billing, session } = await authenticate.admin(request);
+  const shop = session.shop;
 
   try {
     const billingCheck = await billing.require({
-      plans: [MONTHLY_PLAN, ANNUAL_PLAN],
+      plans: [BASIC_PLAN, STANDARD_PLAN, PREMIUM_PLAN],
       isTest: true,
       onFailure: () => {
         throw new Error("No active plan");
@@ -30,10 +37,17 @@ export async function loader({ request }) {
     const subscription = billingCheck.appSubscriptions[0];
     console.log(`Shop is on ${subscription.name} (id ${subscription.id})`);
 
-    return json({ billing, plan: subscription });
+    // Update the subscription plan in the database
+    await setSubscriptionPlan(shop, subscription.name);
+
+    console.log(" shopshopshopshopshopshopshopshopshop /n/n", shop);
+
+    return json({ plan: subscription });
   } catch (error) {
     if (error.message === "No active plan") {
-      return json({ billing, plan: { name: "Free" } });
+      // Update to Free Plan if no active plan
+      await setSubscriptionPlan(shop, "Free Plan");
+      return json({ plan: { name: "Free Plan" } });
     }
     throw error;
   }
@@ -41,32 +55,79 @@ export async function loader({ request }) {
 
 const planData = [
   {
-    title: "Free",
+    title: "Free Plan",
     description: "Free plan with basic features",
     price: "0",
     action: "Upgrade to Pro",
-    name: "Free",
+    name: "Free Plan",
     url: "/app/upgrade",
-    features: ["Feature 1", "Feature 2", "Feature 3"],
+    features: [
+      "Basic Sentiment Analysis",
+      "Manual Responses",
+      "Basic Review Moderation",
+      "Basic Analytics",
+    ],
   },
   {
-    title: "Pro",
-    description: "Pro plan with advanced features",
+    title: "Basic",
+    description: "Basic plan with advanced features",
+    price: "10",
+    name: "Basic Plan",
+    action: "Upgrade to Basic",
+    url: "/app/upgrade?plan=Basic Plan",
+    features: [
+      "Advanced Sentiment Analysis",
+      "Manual Responses",
+      "Basic Analytics",
+      "Email Notifications",
+    ],
+  },
+  {
+    title: "Standard",
+    description: "Standard plan with more features",
     price: "20",
-    name: "Monthly subscription",
-    action: "Upgrade to Pro",
-    url: "/app/upgrade",
-    features: ["Feature 1", "Feature 2", "Feature 3", "Feature 4"],
+    name: "Standard Plan",
+    action: "Upgrade to Standard",
+    url: "/app/upgrade?plan=Standard Plan",
+    features: [
+      "Advanced Sentiment Analysis",
+      "Manual Responses",
+      "Basic Analytics",
+      "Email Notifications",
+      "Automated Responses",
+      "Images or Video",
+      "Review Moderation",
+    ],
+  },
+  {
+    title: "Premium",
+    description: "Premium plan with all features",
+    price: "30",
+    name: "Premium Plan",
+    action: "Upgrade to Premium",
+    url: "/app/upgrade?plan=Premium Plan",
+    features: [
+      "Advanced Sentiment Analysis",
+      "Manual Responses",
+      "Basic Analytics",
+      "Email Notifications",
+      "Automated Responses",
+      "Images or Video",
+      "Review Moderation",
+      "Bulk Actions",
+      "Advanced Analytics",
+      "Review Export/Import",
+    ],
   },
 ];
 
 export default function PricingPage() {
   const { plan } = useLoaderData();
 
-  console.log("plan :", plan);
+  console.log("plan : ", plan);
 
   return (
-    <Page>
+    <Page title="Pricing">
       <CalloutCard
         title="Change your plan"
         illustration="https://cdn.shopify.com/s/files/1/0583/6465/7734/files/tag.png?v=1705280535"
@@ -75,13 +136,13 @@ export default function PricingPage() {
           url: "/app/cancel",
         }}
       >
-        {plan.name === "Monthly subscription" ? (
+        {plan.name === "Premium Plan" ? (
           <Text>
-            You're currently on the Pro plan. All features are unlocked.
+            You're currently on the Premium plan. All features are unlocked.
           </Text>
         ) : (
           <Text>
-            You're currently on the Free plan. Upgrade to Pro to unlock more
+            You're currently on the {plan.name}. Upgrade to unlock more
             features.
           </Text>
         )}
@@ -107,8 +168,8 @@ export default function PricingPage() {
                 <Text as="h3" variant="headingMd">
                   {plan_item.title}
                 </Text>
-                <Box as="p" variant="bodyMd">
-                  {plan_item.description}
+                <Box as="div" variant="bodyMd">
+                  <Text as="p">{plan_item.description}</Text>
                   <br />
                   <Text as="p" variant="headingLg" fontWeight="bold">
                     {plan_item.price === "0" ? "" : "$" + plan_item.price}
@@ -124,8 +185,7 @@ export default function PricingPage() {
                   ))}
                 </BlockStack>
                 <Divider />
-                {plan_item.name === "Monthly subscription" &&
-                plan.name !== "Monthly subscription" ? (
+                {plan_item.name !== plan.name ? (
                   <Button primary url={plan_item.url}>
                     {plan_item.action}
                   </Button>

@@ -14,16 +14,21 @@ import {
   Button,
 } from "@shopify/polaris";
 import { ImageIcon } from "@shopify/polaris-icons";
+import { useBillingPlan } from "../context/BillingPlanContext";
 
-export default function Index() {
+export default function ManageReviews() {
   const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  // const [userPlan, setUserPlan] = useState("Free Plan"); // Default to Free Plan
   const itemsPerPage = 5;
   const navigate = useNavigate();
 
-  // console.log("products", products);
+  const billingPlan = useBillingPlan();
+
+  // Now you can use billingPlan in your component logic
+  console.log("Current billing plan:", billingPlan);
 
   useEffect(() => {
     const fetchProducts = async () => {

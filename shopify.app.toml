@@ -3,7 +3,7 @@
 client_id = "6f355af6c9e006c8557d57d8c2566fcb"
 name = "rev-up"
 handle = "rev-up"
-application_url = "https://huntington-wing-relevant-brunette.trycloudflare.com"
+application_url = "https://sandwich-held-yemen-practical.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://huntington-wing-relevant-brunette.trycloudflare.com/auth/callback",
-  "https://huntington-wing-relevant-brunette.trycloudflare.com/auth/shopify/callback",
-  "https://huntington-wing-relevant-brunette.trycloudflare.com/api/auth/callback"
+  "https://sandwich-held-yemen-practical.trycloudflare.com/auth/callback",
+  "https://sandwich-held-yemen-practical.trycloudflare.com/auth/shopify/callback",
+  "https://sandwich-held-yemen-practical.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

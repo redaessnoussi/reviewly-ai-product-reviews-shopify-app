@@ -1,10 +1,10 @@
-// api.stats-dashboard.jsx
+// api.dashboard-stats.jsx
 
 import { json } from "@remix-run/node";
+// import { authenticate } from "../shopify.server";
 import prisma from "../db.server";
 
 export const loader = async ({ request }) => {
-  // Fetch review data
   const totalReviews = await prisma.review.count();
   const averageRating = await prisma.review.aggregate({
     _avg: {
@@ -34,8 +34,6 @@ export const loader = async ({ request }) => {
     date,
     count: aggregatedReviews[date],
   }));
-
-  // console.log("reviewsOverTime :", reviewsOverTime);
 
   const ratingsDistribution = await prisma.review.groupBy({
     by: ["rating"],

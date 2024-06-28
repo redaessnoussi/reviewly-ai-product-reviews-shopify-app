@@ -1,11 +1,13 @@
 // api.reviews.jsx
 
 import { json } from "@remix-run/node";
+import { authenticate } from "../shopify.server";
 import prisma from "../db.server";
 import OpenAI from "openai";
 import { setupFirebase } from "../firebaseConfig";
 import { getDownloadURL, ref, uploadBytes } from "@firebase/storage";
 import sendEmail from "../utils/sendEmails";
+import { getSubscriptionPlan } from "../utils/subscriptionPlan";
 
 async function analyzeSentiment(text, retries = 3, delay = 1000) {
   const url =
@@ -112,7 +114,7 @@ export const action = async ({ request }) => {
   const formData = await request.formData();
 
   const data = Object.fromEntries(formData);
-  const { productId, comment, firstName, lastName, rating } = data;
+  const { productId, comment, firstName, lastName, rating, shopName } = data;
 
   // console.log("productId: ", productId);
   // console.log("comment: ", comment);
@@ -161,53 +163,71 @@ export const action = async ({ request }) => {
     }
   }
 
-  let sentiment = null;
-  if (settings.enableSentimentAnalysis) {
-    sentiment = await analyzeSentiment(comment);
-  } else {
-    sentiment = getSentimentFromRating(parseFloat(rating));
+  try {
+    let subscriptionPlan = await getSubscriptionPlan(shopName);
+
+    console.log("xxxxxxxxxxxxxxxxxxx Subscription plan: ", subscriptionPlan);
+
+    let sentiment = null;
+    if (settings.enableSentimentAnalysis) {
+      if (subscriptionPlan === "Free Plan") {
+        sentiment = getSentimentFromRating(parseFloat(rating));
+      } else {
+        sentiment = await analyzeSentiment(comment);
+      }
+    } else {
+      sentiment = getSentimentFromRating(parseFloat(rating));
+    }
+
+    let aiResponse = null;
+    if (settings.enableAutomatedResponses) {
+      aiResponse = await generateAIResponse(comment);
+    }
+
+    let approved = false;
+    if (settings.reviewModeration === "none") {
+      approved = true;
+    } else if (settings.reviewModeration === "negative") {
+      approved = sentiment !== "NEGATIVE";
+    } else if (settings.reviewModeration === "all") {
+      approved = false;
+    }
+
+    const review = await prisma.review.create({
+      data: {
+        productId,
+        comment,
+        createdAt: new Date(),
+        firstName,
+        lastName,
+        rating: parseFloat(rating),
+        sentiment,
+        AiResponse: aiResponse,
+        imageUrl,
+        videoUrl,
+        approved,
+      },
+    });
+
+    // Send email notification to admin
+    // await sendEmail({
+    //   to: "redavan95@gmail.com", // Replace with the admin's email address
+    //   subject: "New Product Review Submitted",
+    //   productId: productId,
+    //   firstName: firstName,
+    //   lastName: lastName,
+    //   rating: rating,
+    //   comment: comment,
+    // });
+
+    console.log("ha howa:", review);
+
+    return json(review);
+  } catch (error) {
+    console.error("Error processing review:", error);
+    return json(
+      { error: "An error occurred while processing the review" },
+      { status: 500 },
+    );
   }
-
-  let aiResponse = null;
-  if (settings.enableAutomatedResponses) {
-    aiResponse = await generateAIResponse(comment);
-  }
-
-  let approved = false;
-  if (settings.reviewModeration === "none") {
-    approved = true;
-  } else if (settings.reviewModeration === "negative") {
-    approved = sentiment !== "NEGATIVE";
-  } else if (settings.reviewModeration === "all") {
-    approved = false;
-  }
-
-  const review = await prisma.review.create({
-    data: {
-      productId,
-      comment,
-      createdAt: new Date(),
-      firstName,
-      lastName,
-      rating: parseFloat(rating),
-      sentiment,
-      AiResponse: aiResponse,
-      imageUrl,
-      videoUrl,
-      approved,
-    },
-  });
-
-  // Send email notification to admin
-  // await sendEmail({
-  //   to: "redavan95@gmail.com", // Replace with the admin's email address
-  //   subject: "New Product Review Submitted",
-  //   productId: productId,
-  //   firstName: firstName,
-  //   lastName: lastName,
-  //   rating: rating,
-  //   comment: comment,
-  // });
-
-  return json(review);
 };

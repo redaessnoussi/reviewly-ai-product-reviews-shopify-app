@@ -9,9 +9,11 @@ import {
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import { restResources } from "@shopify/shopify-api/rest/admin/2024-04";
 import prisma from "./db.server";
+import { seedSubscriptionPlans } from "./utils/subscriptionPlan";
 
-export const MONTHLY_PLAN = "Monthly subscription";
-export const ANNUAL_PLAN = "Annual subscription";
+export const BASIC_PLAN = "Basic Plan";
+export const STANDARD_PLAN = "Standard Plan";
+export const PREMIUM_PLAN = "Premium Plan";
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
@@ -26,15 +28,20 @@ const shopify = shopifyApp({
   restResources,
   // billing for free and paid plans: https://shopify.dev/docs/api/shopify-app-remix/v2/apis/billing
   billing: {
-    [MONTHLY_PLAN]: {
+    [BASIC_PLAN]: {
+      amount: 10,
+      currencyCode: "USD",
+      interval: BillingInterval.Every30Days,
+    },
+    [STANDARD_PLAN]: {
       amount: 20,
       currencyCode: "USD",
       interval: BillingInterval.Every30Days,
     },
-    [ANNUAL_PLAN]: {
-      amount: 200,
+    [PREMIUM_PLAN]: {
+      amount: 30,
       currencyCode: "USD",
-      interval: BillingInterval.Annual,
+      interval: BillingInterval.Every30Days,
     },
   },
   webhooks: {
@@ -47,6 +54,11 @@ const shopify = shopifyApp({
     afterAuth: async ({ session }) => {
       console.log("App installed, initializing settings...");
       const shop = session.shop;
+
+      console.log("Seeding initial subscription plans...");
+      // Seed initial subscription plans if not exist
+      const initialPlans = [{ shop, subscription: "Free Plan" }];
+      await seedSubscriptionPlans(initialPlans);
 
       // Check if settings already exist
       const existingSettings = await prisma.settings.findUnique({
