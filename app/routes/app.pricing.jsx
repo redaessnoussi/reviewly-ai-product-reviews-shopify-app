@@ -40,7 +40,7 @@ export async function loader({ request }) {
     // Update the subscription plan in the database
     await setSubscriptionPlan(shop, subscription.name);
 
-    console.log(" shopshopshopshopshopshopshopshopshop /n/n", shop);
+    console.log(" pricing shop name: /n/n", shop);
 
     return json({ plan: subscription });
   } catch (error) {
@@ -64,7 +64,7 @@ const planData = [
     features: [
       "Basic Sentiment Analysis",
       "Manual Responses",
-      "Basic Review Moderation",
+      "No Review Moderation",
       "Basic Analytics",
     ],
   },

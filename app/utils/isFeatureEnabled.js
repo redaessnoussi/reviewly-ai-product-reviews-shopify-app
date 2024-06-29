@@ -3,7 +3,7 @@ export const isFeatureEnabled = (userPlan, feature) => {
     "Free Plan": [
       "Basic Sentiment Analysis",
       "Manual Responses",
-      "Basic Review Moderation",
+      "No Review Moderation",
       "Basic Analytics",
     ],
     "Basic Plan": [

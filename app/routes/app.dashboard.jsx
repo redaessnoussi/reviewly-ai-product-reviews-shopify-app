@@ -1,7 +1,7 @@
-// app._index.jsx
+// app.dashboard.jsx
 
 import { useEffect, useState } from "react";
-import { Page, Card, Text, Box, Grid } from "@shopify/polaris";
+import { Page, Card, Text, Box, Grid, Button } from "@shopify/polaris";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,6 +15,8 @@ import {
   ArcElement,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
+import { useBillingPlan } from "../context/BillingPlanContext";
+import { useNavigate } from "@remix-run/react";
 // import { MONTHLY_PLAN, authenticate } from "../shopify.server";
 // import { loader as fetchDashboardStats } from "./api.stats-dashboard";
 // import { useLoaderData } from "@remix-run/react";
@@ -31,20 +33,14 @@ ChartJS.register(
   ArcElement,
 );
 
-// export const loader = async ({ request }) => {
-//   const { billing } = await authenticate.admin(request);
-//   const { hasActivePayment, appSubscriptions } = await billing.check({
-//     plans: [MONTHLY_PLAN],
-//     isTest: true,
-//   });
-//   console.log("hasActivePayment", hasActivePayment);
-//   console.log("appSubscriptions", appSubscriptions);
-
-//   return null;
-// };
-
 export default function HomeDashboard() {
   const [stats, setStats] = useState(null);
+
+  const billingPlan = useBillingPlan();
+  const navigate = useNavigate();
+
+  // Now you can use billingPlan in your component logic
+  console.log("Settings,Current billing plan:", billingPlan);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -116,6 +112,21 @@ export default function HomeDashboard() {
     ],
   };
 
+  const UpgradePlanCard = ({ header }) => (
+    <Card roundedAbove="sm">
+      <Text as="h2" variant="headingSm">
+        {header}
+      </Text>
+      <Box paddingBlockStart="200">
+        <Text as="p" variant="bodyMd">
+          Upgrade for Advanced Analytics: Unlock detailed analytics and more
+          features by upgrading your plan.
+        </Text>
+        <Button onClick={() => navigate("/app/pricing")}>Upgrade Now</Button>
+      </Box>
+    </Card>
+  );
+
   return (
     <Page title="Home Dashboard">
       <Grid gap="400">
@@ -145,37 +156,52 @@ export default function HomeDashboard() {
           </Card>
         </Grid.Cell>
 
+        {/* Reviews over time for premium plan */}
         <Grid.Cell columnSpan={{ xs: 12, sm: 12, md: 12, lg: 12, xl: 12 }}>
-          <Card roundedAbove="sm">
-            <Text as="h2" variant="headingSm">
-              Reviews Over Time
-            </Text>
-            <Box paddingBlockStart="200">
-              <Line data={reviewsOverTimeData} />
-            </Box>
-          </Card>
+          {billingPlan === "Free Plan" ? (
+            <UpgradePlanCard header="Reviews Over Time" />
+          ) : (
+            <Card roundedAbove="sm">
+              <Text as="h2" variant="headingSm">
+                Reviews Over Time
+              </Text>
+              <Box paddingBlockStart="200">
+                <Line data={reviewsOverTimeData} />
+              </Box>
+            </Card>
+          )}
         </Grid.Cell>
 
+        {/* Ratings distribution for premium plan */}
         <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6, xl: 6 }}>
-          <Card roundedAbove="sm">
-            <Text as="h2" variant="headingSm">
-              Ratings Distribution
-            </Text>
-            <Box paddingBlockStart="200">
-              <Line data={ratingsDistributionData} />
-            </Box>
-          </Card>
+          {billingPlan === "Free Plan" ? (
+            <UpgradePlanCard header="Ratings Distribution" />
+          ) : (
+            <Card roundedAbove="sm">
+              <Text as="h2" variant="headingSm">
+                Ratings Distribution
+              </Text>
+              <Box paddingBlockStart="200">
+                <Line data={ratingsDistributionData} />
+              </Box>
+            </Card>
+          )}
         </Grid.Cell>
 
+        {/* Sentiment counts for premium plan */}
         <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6, xl: 6 }}>
-          <Card roundedAbove="sm">
-            <Text as="h2" variant="headingSm">
-              Sentiment Analysis
-            </Text>
-            <Box paddingBlockStart="200">
-              <Line data={sentimentCountsData} />
-            </Box>
-          </Card>
+          {billingPlan === "Free Plan" ? (
+            <UpgradePlanCard header="Sentiment Analysis" />
+          ) : (
+            <Card roundedAbove="sm">
+              <Text as="h2" variant="headingSm">
+                Sentiment Analysis
+              </Text>
+              <Box paddingBlockStart="200">
+                <Line data={sentimentCountsData} />
+              </Box>
+            </Card>
+          )}
         </Grid.Cell>
 
         <Grid.Cell columnSpan={{ xs: 12, sm: 12, md: 12, lg: 12, xl: 12 }}>

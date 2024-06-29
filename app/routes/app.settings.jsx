@@ -5,6 +5,7 @@ import { useLoaderData } from "@remix-run/react";
 // import { authenticate } from "../shopify.server";
 import prisma from "../db.server";
 import SettingsForm from "../components/Settings/SettingsForm";
+import { useBillingPlan } from "../context/BillingPlanContext";
 
 export const loader = async ({ request }) => {
   const settings = await prisma.settings.findFirst({ where: { id: 1 } });
@@ -37,6 +38,11 @@ export const action = async ({ request }) => {
 export default function Settings() {
   const { settings } = useLoaderData();
 
+  const billingPlan = useBillingPlan();
+
+  // Now you can use billingPlan in your component logic
+  console.log("Settings,Current billing plan:", billingPlan);
+
   const initialSettings = {
     enableSentimentAnalysis: settings.enableSentimentAnalysis,
     enableAutomatedResponses: settings.enableAutomatedResponses,
@@ -44,5 +50,7 @@ export default function Settings() {
     reviewModeration: settings.reviewModeration,
   };
 
-  return <SettingsForm initialSettings={initialSettings} />;
+  return (
+    <SettingsForm initialSettings={initialSettings} billingPlan={billingPlan} />
+  );
 }

@@ -14,7 +14,6 @@ import { isFeatureEnabled } from "../utils/isFeatureEnabled";
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }) => {
-  // console.log("\n \n \n request 2 \n \n \n", request);
   await authenticate.admin(request);
   const userPlan = await getUserSubscriptionPlan(request);
 

@@ -169,7 +169,7 @@ export const action = async ({ request }) => {
   try {
     let subscriptionPlan = await getSubscriptionPlan(shopName);
 
-    console.log("xxxxxxxxxxxxxxxxxxx Subscription plan: ", subscriptionPlan);
+    console.log("Current Subscription plan: ", subscriptionPlan);
 
     let sentiment = null;
     if (settings.enableSentimentAnalysis) {
@@ -183,17 +183,21 @@ export const action = async ({ request }) => {
     }
 
     let aiResponse = null;
-    if (settings.enableAutomatedResponses) {
+    if (settings.enableAutomatedResponses && subscriptionPlan !== "Free Plan") {
       aiResponse = await generateAIResponse(comment);
     }
 
-    let approved = false;
-    if (settings.reviewModeration === "none") {
-      approved = true;
+    let approved = true; // All reviews approved for Free Plan
+
+    if (
+      subscriptionPlan !== "Free Plan" &&
+      settings.reviewModeration === "none"
+    ) {
+      approved = true; // All reviews approved for paid plans based on settings
     } else if (settings.reviewModeration === "negative") {
-      approved = sentiment !== "NEGATIVE";
+      approved = sentiment !== "NEGATIVE"; // Approve all except negative
     } else if (settings.reviewModeration === "all") {
-      approved = false;
+      approved = false; // Require approval for all
     }
 
     const review = await prisma.review.create({
