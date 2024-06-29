@@ -25,18 +25,29 @@ model Session {
 }
 
 model Review {
-  id         Int      @id @default(autoincrement())
-  productId  String
-  comment    String
-  createdAt  DateTime @default(now())
-  firstName  String
-  lastName   String?
-  rating     Float
-  sentiment  String?
-  AiResponse String?
-  imageUrl   String?
-  videoUrl   String?
-  approved   Boolean  @default(false)
+  id           Int          @id @default(autoincrement())
+  productId    String
+  comment      String
+  adminReplies AdminReply[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  firstName    String
+  lastName     String?
+  rating       Float
+  sentiment    String?
+  AiResponse   String?
+  imageUrl     String?
+  videoUrl     String?
+  approved     Boolean      @default(false)
+}
+
+model AdminReply {
+  id        Int      @id @default(autoincrement())
+  reviewId  Int
+  review    Review   @relation(fields: [reviewId], references: [id])
+  reply     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Settings {

@@ -52,7 +52,7 @@
     const shopName = document.getElementById('shop-name').value;
     const productId = document.getElementById('product-id').value;
 
-    const apiEndpoint = 'https://sandwich-held-yemen-practical.trycloudflare.com';
+    const apiEndpoint = 'https://assurance-analysts-discussing-distinct.trycloudflare.com';
 
     // Fetch settings
     const settingsResponse = await fetch(`${apiEndpoint}/api/settings`);
@@ -111,6 +111,7 @@
             month: 'long',
             day: 'numeric',
           });
+          console.log("review.adminReplies", review.adminReplies)
           reviewElement.innerHTML = `
             <div style="display: flex; align-items: center; margin-bottom: 10px;">
               <img src="https://via.placeholder.com/48" alt="Customer Avatar">
@@ -125,9 +126,39 @@
             enableSentimentAnalysis && review.sentiment ? ` | ${capitalizeFirstLetter(review.sentiment)}` : ''
           }</p>
             ${enableAutomatedResponses && review.AiResponse ? `<p>${review.AiResponse}</p>` : ''}
+            <button class="reply-button" data-review-id="${review.id}">Reply to Customer</button>
+            <div class="admin-replies" id="admin-replies-${review.id}">
+               ${review.adminReplies ? review.adminReplies.map(reply => `<p>${reply.reply} - ${new Date(reply.createdAt).toLocaleDateString('en-US')}</p>`).join('') : ''}
+            </div>
           `;
           reviewsList.appendChild(reviewElement);
         });
+
+        document.querySelectorAll('.reply-button').forEach(button => {
+          button.addEventListener('click', () => {
+            const reviewId = button.getAttribute('data-review-id');
+            const replyText = prompt('Enter your reply:');
+            if (replyText) {
+              submitAdminReply(reviewId, replyText);
+            }
+          });
+        });
+      }
+    };
+
+    const submitAdminReply = async (reviewId, replyText) => {
+      const response = await fetch(`${apiEndpoint}/api/admin-reply`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reviewId, reply: replyText }),
+      });
+      if (response.ok) {
+        alert('Reply submitted successfully');
+        await fetchReviews(); // Refresh the reviews list to include the new reply
+      } else {
+        alert('Failed to submit reply');
       }
     };
 

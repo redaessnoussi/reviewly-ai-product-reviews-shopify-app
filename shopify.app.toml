@@ -3,7 +3,7 @@
 client_id = "6f355af6c9e006c8557d57d8c2566fcb"
 name = "rev-up"
 handle = "rev-up"
-application_url = "https://sandwich-held-yemen-practical.trycloudflare.com"
+application_url = "https://assurance-analysts-discussing-distinct.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://sandwich-held-yemen-practical.trycloudflare.com/auth/callback",
-  "https://sandwich-held-yemen-practical.trycloudflare.com/auth/shopify/callback",
-  "https://sandwich-held-yemen-practical.trycloudflare.com/api/auth/callback"
+  "https://assurance-analysts-discussing-distinct.trycloudflare.com/auth/callback",
+  "https://assurance-analysts-discussing-distinct.trycloudflare.com/auth/shopify/callback",
+  "https://assurance-analysts-discussing-distinct.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

@@ -105,6 +105,9 @@ export const loader = async ({ request }) => {
   const reviews = await prisma.review.findMany({
     where: { productId, approved: true },
     orderBy: { createdAt: "desc" }, // Order by createdAt in descending order
+    include: {
+      adminReplies: true, // Include admin replies in the fetched reviews
+    },
   });
 
   return json(reviews);
