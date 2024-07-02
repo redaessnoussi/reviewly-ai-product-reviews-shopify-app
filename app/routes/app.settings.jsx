@@ -16,11 +16,16 @@ export const loader = async ({ request }) => {
 export const action = async ({ request }) => {
   const data = await request.formData();
 
+  const prevSettings = await prisma.settings.findFirst({
+    where: { id: 1 },
+  });
+
   const enableSentimentAnalysis = data.get("enableSentimentAnalysis") === "on";
   const enableAutomatedResponses =
     data.get("enableAutomatedResponses") === "on";
   const allowMedia = data.get("allowMedia") === "on";
-  const reviewModeration = data.get("reviewModeration");
+  const reviewModeration =
+    data.get("reviewModeration") || prevSettings.reviewModeration;
 
   await prisma.settings.update({
     where: { id: 1 },

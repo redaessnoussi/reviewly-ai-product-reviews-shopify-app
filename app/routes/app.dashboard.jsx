@@ -17,6 +17,7 @@ import {
 import { Line } from "react-chartjs-2";
 import { useBillingPlan } from "../context/BillingPlanContext";
 import { useNavigate } from "@remix-run/react";
+import { isFeatureEnabled } from "../utils/isFeatureEnabled";
 // import { MONTHLY_PLAN, authenticate } from "../shopify.server";
 // import { loader as fetchDashboardStats } from "./api.stats-dashboard";
 // import { useLoaderData } from "@remix-run/react";
@@ -158,7 +159,7 @@ export default function HomeDashboard() {
 
         {/* Reviews over time for premium plan */}
         <Grid.Cell columnSpan={{ xs: 12, sm: 12, md: 12, lg: 12, xl: 12 }}>
-          {billingPlan === "Free Plan" ? (
+          {isFeatureEnabled(billingPlan, "Basic Analytics") ? (
             <UpgradePlanCard header="Reviews Over Time" />
           ) : (
             <Card roundedAbove="sm">
@@ -174,7 +175,7 @@ export default function HomeDashboard() {
 
         {/* Ratings distribution for premium plan */}
         <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6, xl: 6 }}>
-          {billingPlan === "Free Plan" ? (
+          {isFeatureEnabled(billingPlan, "Basic Analytics") ? (
             <UpgradePlanCard header="Ratings Distribution" />
           ) : (
             <Card roundedAbove="sm">
@@ -190,7 +191,7 @@ export default function HomeDashboard() {
 
         {/* Sentiment counts for premium plan */}
         <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6, xl: 6 }}>
-          {billingPlan === "Free Plan" ? (
+          {isFeatureEnabled(billingPlan, "Basic Analytics") ? (
             <UpgradePlanCard header="Sentiment Analysis" />
           ) : (
             <Card roundedAbove="sm">

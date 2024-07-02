@@ -1,5 +1,8 @@
 // // app._index.jsx
 
+import { useNavigate } from "@remix-run/react";
+import { useEffect } from "react";
+
 // import { json } from "@remix-run/node";
 // import { authenticate } from "../shopify.server";
 // import { useLoaderData } from "@remix-run/react";
@@ -17,9 +20,14 @@ export const action = async ({ request }) => {};
 
 export default function Index() {
   // const { auth, shop } = useLoaderData();
+  const navigate = useNavigate();
 
   // console.log("auth ", auth);
   // console.log("shop ", shop);
 
-  return <p>hola</p>;
+  useEffect(() => {
+    navigate("/app/dashboard");
+  }, []);
+
+  return null;
 }

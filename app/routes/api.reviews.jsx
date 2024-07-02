@@ -8,6 +8,7 @@ import { setupFirebase } from "../firebaseConfig";
 import { getDownloadURL, ref, uploadBytes } from "@firebase/storage";
 import sendEmail from "../utils/sendEmails";
 import { getSubscriptionPlan } from "../utils/subscriptionPlan";
+import { isFeatureEnabled } from "../utils/isFeatureEnabled";
 
 async function analyzeSentiment(text, retries = 3, delay = 1000) {
   const url =
@@ -132,6 +133,9 @@ export const action = async ({ request }) => {
   // Fetch settings
   const settings = await prisma.settings.findFirst({ where: { id: 1 } });
 
+  let subscriptionPlan = await getSubscriptionPlan(shopName);
+  console.log("Current Subscription plan: ", subscriptionPlan);
+
   if (!settings.allowMedia) {
     formData.delete("image");
     formData.delete("video");
@@ -156,7 +160,10 @@ export const action = async ({ request }) => {
 
   // console.log("imageFile: ", imageFile);
 
-  if (settings.allowMedia) {
+  if (
+    isFeatureEnabled(subscriptionPlan, "Images or Video") &&
+    settings.allowMedia
+  ) {
     if (imageFile && imageFile.size > 0) {
       imageUrl = await uploadFile(imageFile, "images", storage);
     }
@@ -167,13 +174,10 @@ export const action = async ({ request }) => {
   }
 
   try {
-    let subscriptionPlan = await getSubscriptionPlan(shopName);
-
-    console.log("Current Subscription plan: ", subscriptionPlan);
-
     let sentiment = null;
+
     if (settings.enableSentimentAnalysis) {
-      if (subscriptionPlan === "Free Plan") {
+      if (isFeatureEnabled(subscriptionPlan, "Basic Sentiment Analysis")) {
         sentiment = getSentimentFromRating(parseFloat(rating));
       } else {
         sentiment = await analyzeSentiment(comment);
@@ -183,20 +187,29 @@ export const action = async ({ request }) => {
     }
 
     let aiResponse = null;
-    if (settings.enableAutomatedResponses && subscriptionPlan !== "Free Plan") {
+    if (
+      settings.enableAutomatedResponses &&
+      isFeatureEnabled(subscriptionPlan, "Automated Responses")
+    ) {
       aiResponse = await generateAIResponse(comment);
     }
 
     let approved = true; // All reviews approved for Free Plan
 
     if (
-      subscriptionPlan !== "Free Plan" &&
+      isFeatureEnabled(subscriptionPlan, "Review Moderation") &&
       settings.reviewModeration === "none"
     ) {
       approved = true; // All reviews approved for paid plans based on settings
-    } else if (settings.reviewModeration === "negative") {
+    } else if (
+      isFeatureEnabled(subscriptionPlan, "Review Moderation") &&
+      settings.reviewModeration === "negative"
+    ) {
       approved = sentiment !== "NEGATIVE"; // Approve all except negative
-    } else if (settings.reviewModeration === "all") {
+    } else if (
+      isFeatureEnabled(subscriptionPlan, "Review Moderation") &&
+      settings.reviewModeration === "all"
+    ) {
       approved = false; // Require approval for all
     }
 
@@ -217,15 +230,18 @@ export const action = async ({ request }) => {
     });
 
     // Send email notification to admin
-    // await sendEmail({
-    //   to: "redavan95@gmail.com", // Replace with the admin's email address
-    //   subject: "New Product Review Submitted",
-    //   productId: productId,
-    //   firstName: firstName,
-    //   lastName: lastName,
-    //   rating: rating,
-    //   comment: comment,
-    // });
+
+    if (isFeatureEnabled(subscriptionPlan, "Email Notifications")) {
+      await sendEmail({
+        to: "redavan95@gmail.com", // Replace with the admin's email address
+        subject: "New Product Review Submitted",
+        productId: productId,
+        firstName: firstName,
+        lastName: lastName,
+        rating: rating,
+        comment: comment,
+      });
+    }
 
     console.log("ha howa:", review);
 

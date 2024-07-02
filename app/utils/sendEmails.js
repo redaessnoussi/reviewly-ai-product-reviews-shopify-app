@@ -11,7 +11,7 @@ const sendEmail = async ({
   comment,
 }) => {
   const senderEmail = "onboarding@resend.dev";
-  const appName = "Advanced Reviews";
+  const appName = "RevUp Reviews";
 
   const emailHtml = `
     <!DOCTYPE html>

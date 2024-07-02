@@ -63,13 +63,15 @@ export default function ManageReviews() {
         <Text>Loading...</Text>
       ) : (
         <Card>
-          <Link
+          <Button
             onClick={() => {
               navigate("/app/import-export-reviews");
             }}
+            primary
           >
-            <Button primary>Go to Import/Export Reviews</Button>
-          </Link>
+            Go to Import/Export Reviews
+          </Button>
+
           <TextField
             label="Search Products"
             value={searchQuery}

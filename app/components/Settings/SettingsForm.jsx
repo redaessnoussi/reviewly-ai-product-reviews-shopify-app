@@ -16,6 +16,7 @@ import {
   Text,
 } from "@shopify/polaris";
 import { Form, useNavigate } from "@remix-run/react";
+import { isFeatureEnabled } from "../../utils/isFeatureEnabled";
 
 const SettingsForm = ({ initialSettings, billingPlan }) => {
   const [enableSentimentAnalysis, setEnableSentimentAnalysis] = useState(
@@ -45,6 +46,12 @@ const SettingsForm = ({ initialSettings, billingPlan }) => {
     </Text>
   );
 
+  const IsFeatureEnabled = ({ feature }) => {
+    if (!isFeatureEnabled(billingPlan, feature)) {
+      return <ShowUpgradeMessage />;
+    }
+  };
+
   const handleSubmit = async (event) => {
     setIsSaving(true);
     event.preventDefault();
@@ -63,7 +70,15 @@ const SettingsForm = ({ initialSettings, billingPlan }) => {
           <Card sectioned>
             <Form method="post" onSubmit={handleSubmit}>
               <FormLayout>
-                <Tooltip content="Upgrade to access this feature">
+                <Tooltip
+                  content="Upgrade to access this feature"
+                  // active={
+                  //   !isFeatureEnabled(
+                  //     billingPlan,
+                  //     "Advanced Sentiment Analysis",
+                  //   )
+                  // }
+                >
                   <Checkbox
                     label={"Enable Sentiment Analysis"}
                     checked={enableSentimentAnalysis}
@@ -72,12 +87,20 @@ const SettingsForm = ({ initialSettings, billingPlan }) => {
                     }
                     name="enableSentimentAnalysis"
                     value="on"
-                    disabled={billingPlan === "Free Plan"}
+                    disabled={
+                      !isFeatureEnabled(
+                        billingPlan,
+                        "Advanced Sentiment Analysis",
+                      )
+                    }
                   />
                 </Tooltip>
-                {billingPlan === "Free Plan" && <ShowUpgradeMessage />}
+                <IsFeatureEnabled feature={"Advanced Sentiment Analysis"} />
 
-                <Tooltip content="Upgrade to access this feature">
+                <Tooltip
+                  content="Upgrade to access this feature"
+                  // active={!isFeatureEnabled(billingPlan, "Automated Responses")}
+                >
                   <Checkbox
                     label={"Enable Automated Responses"}
                     checked={enableAutomatedResponses}
@@ -86,24 +109,32 @@ const SettingsForm = ({ initialSettings, billingPlan }) => {
                     }
                     name="enableAutomatedResponses"
                     value="on"
-                    disabled={billingPlan === "Free Plan"}
+                    disabled={
+                      !isFeatureEnabled(billingPlan, "Automated Responses")
+                    }
                   />
                 </Tooltip>
-                {billingPlan === "Free Plan" && <ShowUpgradeMessage />}
+                <IsFeatureEnabled feature={"Automated Responses"} />
 
-                <Tooltip content="Upgrade to access this feature">
+                <Tooltip
+                  content="Upgrade to access this feature"
+                  // active={!isFeatureEnabled(billingPlan, "Images or Video")}
+                >
                   <Checkbox
                     label={"Allow Images or Videos"}
                     checked={allowMedia}
                     onChange={(newValue) => setAllowMedia(newValue)}
                     name="allowMedia"
                     value="on"
-                    disabled={billingPlan === "Free Plan"}
+                    disabled={!isFeatureEnabled(billingPlan, "Images or Video")}
                   />
                 </Tooltip>
-                {billingPlan === "Free Plan" && <ShowUpgradeMessage />}
+                <IsFeatureEnabled feature={"Images or Video"} />
 
-                <Tooltip content="Upgrade to access this feature">
+                <Tooltip
+                  content="Upgrade to access this feature"
+                  // active={!isFeatureEnabled(billingPlan, "Review Moderation")}
+                >
                   <Select
                     label={"Review Moderation"}
                     options={[
@@ -114,10 +145,12 @@ const SettingsForm = ({ initialSettings, billingPlan }) => {
                     value={reviewModeration}
                     onChange={(newValue) => setReviewModeration(newValue)}
                     name="reviewModeration"
-                    disabled={billingPlan === "Free Plan"}
+                    disabled={
+                      !isFeatureEnabled(billingPlan, "Review Moderation")
+                    }
                   />
                 </Tooltip>
-                {billingPlan === "Free Plan" && <ShowUpgradeMessage />}
+                <IsFeatureEnabled feature={"Review Moderation"} />
 
                 <PageActions
                   primaryAction={{
