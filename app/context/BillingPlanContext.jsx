@@ -5,7 +5,8 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 const BillingPlanContext = createContext();
 
 export const BillingPlanProvider = ({ children }) => {
-  const [billingPlan, setBillingPlan] = useState("Free Plan");
+  const [billingPlan, setBillingPlan] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchBillingPlan = async () => {
@@ -15,11 +16,17 @@ export const BillingPlanProvider = ({ children }) => {
         setBillingPlan(data.userPlan);
       } catch (error) {
         console.error("Error fetching billing plan:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchBillingPlan();
   }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <BillingPlanContext.Provider value={billingPlan}>

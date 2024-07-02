@@ -3,7 +3,7 @@
 client_id = "6f355af6c9e006c8557d57d8c2566fcb"
 name = "rev-up"
 handle = "rev-up"
-application_url = "https://implementation-gave-designer-joy.trycloudflare.com"
+application_url = "https://seemed-poster-fears-bottles.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://implementation-gave-designer-joy.trycloudflare.com/auth/callback",
-  "https://implementation-gave-designer-joy.trycloudflare.com/auth/shopify/callback",
-  "https://implementation-gave-designer-joy.trycloudflare.com/api/auth/callback"
+  "https://seemed-poster-fears-bottles.trycloudflare.com/auth/callback",
+  "https://seemed-poster-fears-bottles.trycloudflare.com/auth/shopify/callback",
+  "https://seemed-poster-fears-bottles.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
