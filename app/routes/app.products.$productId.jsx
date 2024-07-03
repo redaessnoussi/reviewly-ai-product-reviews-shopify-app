@@ -15,10 +15,13 @@ import {
   Button,
   useIndexResourceState,
   Spinner,
+  Tooltip,
 } from "@shopify/polaris";
 import capitalizeFirstLetter from "../utils/capitalizeFirstLetter";
 import { useEffect, useState } from "react";
 import { truncateText } from "../utils/truncateText";
+import { useBillingPlan } from "../context/BillingPlanContext";
+import { isFeatureEnabled } from "../utils/isFeatureEnabled";
 
 // GraphQL query to fetch product data
 const PRODUCT_QUERY = `
@@ -60,6 +63,10 @@ export default function ProductReviews() {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const fetcher = useFetcher();
+
+  const billingPlan = useBillingPlan();
+  const isBulkActionsEnabled = isFeatureEnabled(billingPlan, "Bulk Actions");
+
   const { selectedResources, allResourcesSelected, handleSelectionChange } =
     useIndexResourceState(reviews);
 
@@ -140,14 +147,26 @@ export default function ProductReviews() {
     {
       content: "Approve",
       onAction: () => handleBulkAction("approve"),
+      disabled: !isBulkActionsEnabled,
+      helpText: !isBulkActionsEnabled
+        ? "This feature is available in the Premium Plan"
+        : null,
     },
     {
       content: "Reject",
       onAction: () => handleBulkAction("reject"),
+      disabled: !isBulkActionsEnabled,
+      helpText: !isBulkActionsEnabled
+        ? "This feature is available in the Premium Plan"
+        : null,
     },
     {
       content: "Delete",
       onAction: () => handleBulkAction("delete"),
+      disabled: !isBulkActionsEnabled,
+      helpText: !isBulkActionsEnabled
+        ? "This feature is available in the Premium Plan"
+        : null,
     },
   ];
 

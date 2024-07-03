@@ -40,6 +40,11 @@ export default function HomeDashboard() {
   const billingPlan = useBillingPlan();
   const navigate = useNavigate();
 
+  const isAdvancedAnalyticsEnabled = isFeatureEnabled(
+    billingPlan,
+    "Advanced Analytics",
+  );
+
   // Now you can use billingPlan in your component logic
   console.log("Settings,Current billing plan:", billingPlan);
 
@@ -159,7 +164,7 @@ export default function HomeDashboard() {
 
         {/* Reviews over time for premium plan */}
         <Grid.Cell columnSpan={{ xs: 12, sm: 12, md: 12, lg: 12, xl: 12 }}>
-          {isFeatureEnabled(billingPlan, "Basic Analytics") ? (
+          {!isAdvancedAnalyticsEnabled ? (
             <UpgradePlanCard header="Reviews Over Time" />
           ) : (
             <Card roundedAbove="sm">
@@ -175,7 +180,7 @@ export default function HomeDashboard() {
 
         {/* Ratings distribution for premium plan */}
         <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6, xl: 6 }}>
-          {isFeatureEnabled(billingPlan, "Basic Analytics") ? (
+          {!isAdvancedAnalyticsEnabled ? (
             <UpgradePlanCard header="Ratings Distribution" />
           ) : (
             <Card roundedAbove="sm">
@@ -191,7 +196,7 @@ export default function HomeDashboard() {
 
         {/* Sentiment counts for premium plan */}
         <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6, xl: 6 }}>
-          {isFeatureEnabled(billingPlan, "Basic Analytics") ? (
+          {!isAdvancedAnalyticsEnabled ? (
             <UpgradePlanCard header="Sentiment Analysis" />
           ) : (
             <Card roundedAbove="sm">
