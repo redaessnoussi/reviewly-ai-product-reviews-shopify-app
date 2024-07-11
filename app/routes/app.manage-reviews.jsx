@@ -1,7 +1,7 @@
 // app.manage-reviews.jsx
 
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "@remix-run/react";
+import { json, Link, useNavigate } from "@remix-run/react";
 import {
   Card,
   IndexTable,
@@ -14,7 +14,32 @@ import {
   Button,
 } from "@shopify/polaris";
 import { ImageIcon } from "@shopify/polaris-icons";
-import { useBillingPlan } from "../context/BillingPlanContext";
+import {
+  authenticate,
+  BASIC_PLAN,
+  PREMIUM_PLAN,
+  STANDARD_PLAN,
+} from "../shopify.server";
+
+export async function loader({ request }) {
+  const { billing, session } = await authenticate.admin(request);
+  const shop = session.shop;
+
+  const billingCheck = await billing.require({
+    plans: [BASIC_PLAN, STANDARD_PLAN, PREMIUM_PLAN],
+    isTest: true,
+    onFailure: () => {
+      throw new Error("No active plan");
+    },
+  });
+
+  const subscription = billingCheck.appSubscriptions[0];
+  console.log(`Shop is on ${subscription.name} (id ${subscription.id})`);
+
+  console.log("\n\n pricing shop name:", shop);
+
+  return json({ plan: subscription || { name: "Free Plan" } });
+}
 
 export default function ManageReviews() {
   const [products, setProducts] = useState([]);
@@ -25,10 +50,10 @@ export default function ManageReviews() {
   const itemsPerPage = 5;
   const navigate = useNavigate();
 
-  const billingPlan = useBillingPlan();
+  // const billingPlan = useBillingPlan();
 
   // Now you can use billingPlan in your component logic
-  console.log("Current billing plan:", billingPlan);
+  // console.log("Current billing plan:", billingPlan);
 
   useEffect(() => {
     const fetchProducts = async () => {

@@ -15,7 +15,7 @@ export const action = async ({ request }) => {
     case "APP_UNINSTALLED":
       if (session) {
         await prisma.session.deleteMany({ where: { shop } });
-        await prisma.settings.deleteMany({ where: { shop } });
+        // await prisma.settings.deleteMany({ where: { shop } });
         console.log(`Deleted sessions and settings for shop: ${shop}`);
       }
       break;

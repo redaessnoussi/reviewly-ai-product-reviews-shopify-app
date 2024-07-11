@@ -2,23 +2,77 @@
 
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-// import { authenticate } from "../shopify.server";
 import prisma from "../db.server";
 import SettingsForm from "../components/Settings/SettingsForm";
-import { useBillingPlan } from "../context/BillingPlanContext";
+import {
+  authenticate,
+  BASIC_PLAN,
+  PREMIUM_PLAN,
+  STANDARD_PLAN,
+} from "../shopify.server";
 
 export const loader = async ({ request }) => {
-  const settings = await prisma.settings.findFirst({ where: { id: 1 } });
+  const { billing, session } = await authenticate.admin(request);
+  const shop = session.shop;
 
-  return json({ settings });
+  try {
+    const billingCheck = await billing.require({
+      plans: [BASIC_PLAN, STANDARD_PLAN, PREMIUM_PLAN],
+      isTest: true,
+      onFailure: () => {
+        throw new Error("No active plan");
+      },
+    });
+
+    const subscription = billingCheck.appSubscriptions[0];
+    console.log(`Shop is on ${subscription.name} (id ${subscription.id})`);
+
+    console.log("\n\n pricing shop name:", shop);
+
+    console.log("loader,shop:", shop);
+
+    if (!shop) {
+      return json({ error: "Shop parameter is missing" }, { status: 400 });
+    }
+
+    const settings = await prisma.settings.findUnique({ where: { shop } });
+
+    if (!settings) {
+      return json({ error: "Settings not found" }, { status: 404 });
+    }
+
+    return json({ settings, plan: subscription });
+  } catch (error) {
+    if (error.message === "No active plan") {
+      // Update to Free Plan if no active plan
+
+      const settings = await prisma.settings.findUnique({ where: { shop } });
+
+      if (!settings) {
+        return json({ error: "Settings not found" }, { status: 404 });
+      }
+
+      return json({ settings, plan: { name: "Free Plan" } });
+    }
+    throw error;
+  }
 };
 
 export const action = async ({ request }) => {
+  const auth = await authenticate.admin(request);
+  const shop = auth.session.shop;
+
+  if (!shop) {
+    return json({ error: "Shop parameter is missing" }, { status: 400 });
+  }
+
   const data = await request.formData();
 
-  const prevSettings = await prisma.settings.findFirst({
-    where: { id: 1 },
-  });
+  const prevSettings = await prisma.settings.findUnique({ where: { shop } });
+
+  if (!prevSettings) {
+    return json({ error: "Settings not found" }, { status: 404 });
+  }
 
   const enableSentimentAnalysis = data.get("enableSentimentAnalysis") === "on";
   const enableAutomatedResponses =
@@ -28,7 +82,7 @@ export const action = async ({ request }) => {
     data.get("reviewModeration") || prevSettings.reviewModeration;
 
   await prisma.settings.update({
-    where: { id: 1 },
+    where: { shop },
     data: {
       enableSentimentAnalysis,
       enableAutomatedResponses,
@@ -37,16 +91,20 @@ export const action = async ({ request }) => {
     },
   });
 
-  return redirect("/app/settings");
+  return redirect(`/app/settings?shop=${shop}`);
 };
 
 export default function Settings() {
   const { settings } = useLoaderData();
 
-  const billingPlan = useBillingPlan();
+  // const billingPlan = useBillingPlan();
+
+  const { plan } = useLoaderData();
 
   // Now you can use billingPlan in your component logic
-  console.log("Settings,Current billing plan:", billingPlan);
+  // console.log("Settings,Current billing plan:", billingPlan);
+
+  console.log("settings", settings);
 
   const initialSettings = {
     enableSentimentAnalysis: settings.enableSentimentAnalysis,
@@ -55,7 +113,5 @@ export default function Settings() {
     reviewModeration: settings.reviewModeration,
   };
 
-  return (
-    <SettingsForm initialSettings={initialSettings} billingPlan={billingPlan} />
-  );
+  return <SettingsForm initialSettings={initialSettings} billingPlan={plan} />;
 }

@@ -14,9 +14,9 @@ export const loader = async ({ request }) => {
   const url = new URL(request.url);
   const plan = url.searchParams.get("plan");
 
-  let selectedPlan;
+  console.log("app.upgrade.jsx plan", plan);
 
-  console.log("selectedPlan : ", selectedPlan);
+  let selectedPlan;
 
   switch (plan) {
     case "Basic Plan":

@@ -50,26 +50,40 @@ const shopify = shopifyApp({
       callbackUrl: "/webhooks",
     },
   },
+
   hooks: {
     afterAuth: async ({ session }) => {
       console.log("App installed, initializing settings...");
       const shop = session.shop;
 
       console.log("Seeding initial subscription plans...");
+
+      // Check if a subscription plan already exists for the shop
+      // const existingSubscription = await prisma.shopSubscription.findUnique({
+      //   where: { shop },
+      // });
+
       // Seed initial subscription plans if not exist
-      const initialPlans = [{ shop, subscription: "Free Plan" }];
-      await seedSubscriptionPlans(initialPlans);
+      // if (!existingSubscription) {
+      //   console.log("no subscription exists");
+      //   const initialPlans = [{ shop, subscription: "Free Plan" }];
+      //   await seedSubscriptionPlans(initialPlans);
+      // } else {
+      //   console.log(
+      //     "subscription already exists:",
+      //     existingSubscription.subscription,
+      //   );
+      // }
 
       // Check if settings already exist
       const existingSettings = await prisma.settings.findUnique({
-        where: { id: 1 },
+        where: { shop },
       });
 
       // If settings do not exist, create them with default values
       if (!existingSettings) {
         await prisma.settings.create({
           data: {
-            id: 1,
             shop,
             enableSentimentAnalysis: false,
             enableAutomatedResponses: false,

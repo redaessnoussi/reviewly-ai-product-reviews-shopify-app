@@ -12,45 +12,33 @@ import {
 } from "@shopify/polaris";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import { NoteIcon } from "@shopify/polaris-icons";
 import {
   authenticate,
   BASIC_PLAN,
-  STANDARD_PLAN,
   PREMIUM_PLAN,
+  STANDARD_PLAN,
 } from "../shopify.server";
-import { NoteIcon } from "@shopify/polaris-icons";
-import { setSubscriptionPlan } from "../utils/subscriptionPlan";
+// import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
 
 export async function loader({ request }) {
   const { billing, session } = await authenticate.admin(request);
   const shop = session.shop;
 
-  try {
-    const billingCheck = await billing.require({
-      plans: [BASIC_PLAN, STANDARD_PLAN, PREMIUM_PLAN],
-      isTest: true,
-      onFailure: () => {
-        throw new Error("No active plan");
-      },
-    });
+  const billingCheck = await billing.require({
+    plans: [BASIC_PLAN, STANDARD_PLAN, PREMIUM_PLAN],
+    isTest: true,
+    onFailure: () => {
+      throw new Error("No active plan");
+    },
+  });
 
-    const subscription = billingCheck.appSubscriptions[0];
-    console.log(`Shop is on ${subscription.name} (id ${subscription.id})`);
+  const subscription = billingCheck.appSubscriptions[0];
+  console.log(`Shop is on ${subscription.name} (id ${subscription.id})`);
 
-    // Update the subscription plan in the database
-    await setSubscriptionPlan(shop, subscription.name);
+  console.log("\n\n pricing shop name:", shop);
 
-    console.log(" pricing shop name: /n/n", shop);
-
-    return json({ plan: subscription });
-  } catch (error) {
-    if (error.message === "No active plan") {
-      // Update to Free Plan if no active plan
-      await setSubscriptionPlan(shop, "Free Plan");
-      return json({ plan: { name: "Free Plan" } });
-    }
-    throw error;
-  }
+  return json({ plan: subscription || { name: "Free Plan" } });
 }
 
 const planData = [

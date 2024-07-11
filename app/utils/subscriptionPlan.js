@@ -1,3 +1,5 @@
+// import { json } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import prisma from "../db.server";
 
 export async function getSubscriptionPlan(shop) {
@@ -7,7 +9,7 @@ export async function getSubscriptionPlan(shop) {
   return subscription ? subscription.subscription : "Free Plan";
 }
 
-export async function setSubscriptionPlan(shop, subscription) {
+export async function updateSubscriptionPlan(shop, subscription) {
   const existingSubscription = await prisma.shopSubscription.findUnique({
     where: { shop },
   });

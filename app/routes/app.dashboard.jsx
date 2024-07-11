@@ -15,12 +15,14 @@ import {
   ArcElement,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-import { useBillingPlan } from "../context/BillingPlanContext";
-import { useNavigate } from "@remix-run/react";
+import { json, useLoaderData, useNavigate } from "@remix-run/react";
 import { isFeatureEnabled } from "../utils/isFeatureEnabled";
-// import { MONTHLY_PLAN, authenticate } from "../shopify.server";
-// import { loader as fetchDashboardStats } from "./api.stats-dashboard";
-// import { useLoaderData } from "@remix-run/react";
+import {
+  authenticate,
+  BASIC_PLAN,
+  PREMIUM_PLAN,
+  STANDARD_PLAN,
+} from "../shopify.server";
 
 ChartJS.register(
   CategoryScale,
@@ -34,19 +36,52 @@ ChartJS.register(
   ArcElement,
 );
 
+export async function loader({ request }) {
+  const { billing, session } = await authenticate.admin(request);
+  const shop = session.shop;
+
+  try {
+    const billingCheck = await billing.require({
+      plans: [BASIC_PLAN, STANDARD_PLAN, PREMIUM_PLAN],
+      isTest: true,
+      onFailure: () => {
+        throw new Error("No active plan");
+      },
+    });
+
+    const subscription = billingCheck.appSubscriptions[0];
+    console.log(`Shop is on ${subscription.name} (id ${subscription.id})`);
+
+    console.log("\n\n pricing shop name:", shop);
+
+    return json({ plan: subscription });
+  } catch (error) {
+    if (error.message === "No active plan") {
+      // Update to Free Plan if no active plan
+
+      return json({ plan: { name: "Free Plan" } });
+    }
+    throw error;
+  }
+}
+
 export default function HomeDashboard() {
   const [stats, setStats] = useState(null);
 
-  const billingPlan = useBillingPlan();
+  const { plan } = useLoaderData();
+
+  console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>plan", plan);
+
+  // const plan = useplan();
   const navigate = useNavigate();
 
   const isAdvancedAnalyticsEnabled = isFeatureEnabled(
-    billingPlan,
+    plan.name,
     "Advanced Analytics",
   );
 
-  // Now you can use billingPlan in your component logic
-  console.log("Settings,Current billing plan:", billingPlan);
+  // Now you can use plan in your component logic
+  console.log("Settings,Current billing plan:", plan);
 
   useEffect(() => {
     const fetchStats = async () => {

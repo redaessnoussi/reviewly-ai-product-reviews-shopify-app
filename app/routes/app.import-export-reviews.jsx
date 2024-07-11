@@ -13,15 +13,48 @@ import {
   Link,
   Text,
 } from "@shopify/polaris";
-import { useFetcher } from "@remix-run/react";
+import { json, useFetcher, useLoaderData } from "@remix-run/react";
 import { NoteIcon } from "@shopify/polaris-icons";
-import { useBillingPlan } from "../context/BillingPlanContext";
 import { isFeatureEnabled } from "../utils/isFeatureEnabled";
+import {
+  authenticate,
+  BASIC_PLAN,
+  PREMIUM_PLAN,
+  STANDARD_PLAN,
+} from "../shopify.server";
 
-// export const loader = protectedLoader;
+export async function loader({ request }) {
+  const { billing, session } = await authenticate.admin(request);
+  const shop = session.shop;
+
+  try {
+    const billingCheck = await billing.require({
+      plans: [BASIC_PLAN, STANDARD_PLAN, PREMIUM_PLAN],
+      isTest: true,
+      onFailure: () => {
+        throw new Error("No active plan");
+      },
+    });
+
+    const subscription = billingCheck.appSubscriptions[0];
+    console.log(`Shop is on ${subscription.name} (id ${subscription.id})`);
+
+    console.log("\n\n pricing shop name:", shop);
+
+    return json({ plan: subscription });
+  } catch (error) {
+    if (error.message === "No active plan") {
+      // Update to Free Plan if no active plan
+
+      return json({ plan: { name: "Free Plan" } });
+    }
+    throw error;
+  }
+}
 
 export default function ImportExportReviews() {
-  const billingPlan = useBillingPlan();
+  // const billingPlan = useBillingPlan();
+  const { plan } = useLoaderData();
 
   const fetcher = useFetcher();
   const [selectedProduct, setSelectedProduct] = useState("");
@@ -151,7 +184,7 @@ export default function ImportExportReviews() {
     setProgress(100);
   };
 
-  if (!isFeatureEnabled(billingPlan, "Review Export/Import")) {
+  if (!isFeatureEnabled(plan, "Review Export/Import")) {
     return <div>Feature not available for your plan. Please upgrade.</div>;
   } else
     return (

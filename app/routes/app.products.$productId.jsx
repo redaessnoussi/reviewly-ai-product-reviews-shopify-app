@@ -2,7 +2,12 @@
 
 import { json } from "@remix-run/node";
 import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
-import { authenticate } from "../shopify.server";
+import {
+  authenticate,
+  BASIC_PLAN,
+  PREMIUM_PLAN,
+  STANDARD_PLAN,
+} from "../shopify.server";
 import prisma from "../db.server";
 import {
   Page,
@@ -15,12 +20,10 @@ import {
   Button,
   useIndexResourceState,
   Spinner,
-  Tooltip,
 } from "@shopify/polaris";
 import capitalizeFirstLetter from "../utils/capitalizeFirstLetter";
 import { useEffect, useState } from "react";
 import { truncateText } from "../utils/truncateText";
-import { useBillingPlan } from "../context/BillingPlanContext";
 import { isFeatureEnabled } from "../utils/isFeatureEnabled";
 
 // GraphQL query to fetch product data
@@ -36,8 +39,19 @@ const PRODUCT_QUERY = `
 `;
 
 export const loader = async ({ request, params }) => {
-  const { admin } = await authenticate.admin(request);
+  const { billing, admin } = await authenticate.admin(request);
   const productId = params.productId;
+
+  const billingCheck = await billing.require({
+    plans: [BASIC_PLAN, STANDARD_PLAN, PREMIUM_PLAN],
+    isTest: true,
+    onFailure: () => {
+      throw new Error("No active plan");
+    },
+  });
+
+  const subscription = billingCheck.appSubscriptions[0];
+  console.log(`Shop is on ${subscription.name} (id ${subscription.id})`);
 
   // Fetch product details from Shopify
   const response = await admin.graphql(PRODUCT_QUERY, {
@@ -54,18 +68,20 @@ export const loader = async ({ request, params }) => {
     orderBy: { createdAt: "desc" },
   });
 
-  return json({ product, reviews });
+  return json({ plan: subscription || "Free Plan", product, reviews });
 };
 
 export default function ProductReviews() {
+  const { plan } = useLoaderData();
+
   const { product, reviews } = useLoaderData();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const fetcher = useFetcher();
 
-  const billingPlan = useBillingPlan();
-  const isBulkActionsEnabled = isFeatureEnabled(billingPlan, "Bulk Actions");
+  // const billingPlan = useBillingPlan();
+  const isBulkActionsEnabled = isFeatureEnabled(plan, "Bulk Actions");
 
   const { selectedResources, allResourcesSelected, handleSelectionChange } =
     useIndexResourceState(reviews);
