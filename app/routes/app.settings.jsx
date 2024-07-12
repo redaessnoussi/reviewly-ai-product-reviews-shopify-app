@@ -113,5 +113,7 @@ export default function Settings() {
     reviewModeration: settings.reviewModeration,
   };
 
-  return <SettingsForm initialSettings={initialSettings} billingPlan={plan} />;
+  return (
+    <SettingsForm initialSettings={initialSettings} billingPlan={plan.name} />
+  );
 }

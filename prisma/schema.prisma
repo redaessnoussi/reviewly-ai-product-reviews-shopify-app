@@ -62,6 +62,6 @@ model Settings {
 model ShopSubscription {
   id           String   @id @default(cuid())
   shop         String   @unique
-  subscription String
+  subscription String   @default("Free Plan")
   updatedAt    DateTime @updatedAt
 }

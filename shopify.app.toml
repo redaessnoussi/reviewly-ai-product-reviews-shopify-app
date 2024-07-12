@@ -3,7 +3,7 @@
 client_id = "6f355af6c9e006c8557d57d8c2566fcb"
 name = "rev-up"
 handle = "rev-up"
-application_url = "https://ref-smallest-respective-adaptor.trycloudflare.com"
+application_url = "https://banners-act-prepare-routes.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://ref-smallest-respective-adaptor.trycloudflare.com/auth/callback",
-  "https://ref-smallest-respective-adaptor.trycloudflare.com/auth/shopify/callback",
-  "https://ref-smallest-respective-adaptor.trycloudflare.com/api/auth/callback"
+  "https://banners-act-prepare-routes.trycloudflare.com/auth/callback",
+  "https://banners-act-prepare-routes.trycloudflare.com/auth/shopify/callback",
+  "https://banners-act-prepare-routes.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

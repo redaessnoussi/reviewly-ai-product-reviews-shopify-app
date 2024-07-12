@@ -58,22 +58,9 @@ const shopify = shopifyApp({
 
       console.log("Seeding initial subscription plans...");
 
-      // Check if a subscription plan already exists for the shop
-      // const existingSubscription = await prisma.shopSubscription.findUnique({
-      //   where: { shop },
-      // });
-
-      // Seed initial subscription plans if not exist
-      // if (!existingSubscription) {
-      //   console.log("no subscription exists");
-      //   const initialPlans = [{ shop, subscription: "Free Plan" }];
-      //   await seedSubscriptionPlans(initialPlans);
-      // } else {
-      //   console.log(
-      //     "subscription already exists:",
-      //     existingSubscription.subscription,
-      //   );
-      // }
+      // Seed default subscription plan
+      const defaultPlan = [{ shop, subscription: "Free Plan" }];
+      await seedSubscriptionPlans(defaultPlan);
 
       // Check if settings already exist
       const existingSettings = await prisma.settings.findUnique({

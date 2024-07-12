@@ -30,13 +30,13 @@ export async function updateSubscriptionPlan(shop, subscription) {
 }
 
 // Function to seed subscription plans for a list of shops
-export async function seedSubscriptionPlans(shopList) {
+export async function seedSubscriptionPlans(defaultPlan) {
   // Check if any shop subscriptions exist
   const subscriptionsCount = await prisma.shopSubscription.count();
   if (subscriptionsCount === 0) {
     // Seed with initial data if none exist
     await prisma.shopSubscription.createMany({
-      data: shopList,
+      data: defaultPlan,
     });
   }
 }

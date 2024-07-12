@@ -25,20 +25,29 @@ export async function loader({ request }) {
   const { billing, session } = await authenticate.admin(request);
   const shop = session.shop;
 
-  const billingCheck = await billing.require({
-    plans: [BASIC_PLAN, STANDARD_PLAN, PREMIUM_PLAN],
-    isTest: true,
-    onFailure: () => {
-      throw new Error("No active plan");
-    },
-  });
+  try {
+    const billingCheck = await billing.require({
+      plans: [BASIC_PLAN, STANDARD_PLAN, PREMIUM_PLAN],
+      isTest: true,
+      onFailure: () => {
+        throw new Error("No active plan");
+      },
+    });
 
-  const subscription = billingCheck.appSubscriptions[0];
-  console.log(`Shop is on ${subscription.name} (id ${subscription.id})`);
+    const subscription = billingCheck.appSubscriptions[0];
+    console.log(`Shop is on ${subscription.name} (id ${subscription.id})`);
 
-  console.log("\n\n pricing shop name:", shop);
+    console.log("\n\n pricing shop name:", shop);
 
-  return json({ plan: subscription || { name: "Free Plan" } });
+    return json({ plan: subscription });
+  } catch (error) {
+    if (error.message === "No active plan") {
+      // Update to Free Plan if no active plan
+
+      return json({ plan: { name: "Free Plan" } });
+    }
+    throw error;
+  }
 }
 
 export default function ManageReviews() {

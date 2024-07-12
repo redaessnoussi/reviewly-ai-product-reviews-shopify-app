@@ -184,7 +184,7 @@ export default function ImportExportReviews() {
     setProgress(100);
   };
 
-  if (!isFeatureEnabled(plan, "Review Export/Import")) {
+  if (!isFeatureEnabled(plan.name, "Review Export/Import")) {
     return <div>Feature not available for your plan. Please upgrade.</div>;
   } else
     return (

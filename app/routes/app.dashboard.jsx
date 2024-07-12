@@ -70,7 +70,7 @@ export default function HomeDashboard() {
 
   const { plan } = useLoaderData();
 
-  console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>plan", plan);
+  console.log("plan", plan);
 
   // const plan = useplan();
   const navigate = useNavigate();
