@@ -1,5 +1,5 @@
 {
-  "name": "rev-up",
+  "name": "reviewly",
   "private": true,
   "scripts": {
     "build": "remix vite:build",

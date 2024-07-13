@@ -1,9 +1,9 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "6f355af6c9e006c8557d57d8c2566fcb"
-name = "rev-up"
-handle = "rev-up"
-application_url = "https://banners-act-prepare-routes.trycloudflare.com"
+name = ""
+handle = "reviewly-ai-reviews"
+application_url = "https://aircraft-terrorist-arguments-moments.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://banners-act-prepare-routes.trycloudflare.com/auth/callback",
-  "https://banners-act-prepare-routes.trycloudflare.com/auth/shopify/callback",
-  "https://banners-act-prepare-routes.trycloudflare.com/api/auth/callback"
+  "https://aircraft-terrorist-arguments-moments.trycloudflare.com/auth/callback",
+  "https://aircraft-terrorist-arguments-moments.trycloudflare.com/auth/shopify/callback",
+  "https://aircraft-terrorist-arguments-moments.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
