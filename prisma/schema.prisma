@@ -24,9 +24,28 @@ model Session {
   userId      BigInt?
 }
 
+model Shop {
+  id            String             @id @default(cuid())
+  name          String             @unique
+  shopifyDomain String             @unique
+  products      Product[]
+  settings      Settings?
+  subscriptions ShopSubscription[]
+}
+
+model Product {
+  id        Int      @id @default(autoincrement())
+  shopId    String
+  shop      Shop     @relation(fields: [shopId], references: [id])
+  productId String
+  title     String
+  reviews   Review[]
+}
+
 model Review {
   id           Int          @id @default(autoincrement())
-  productId    String
+  productId    Int
+  product      Product      @relation(fields: [productId], references: [id])
   comment      String
   adminReplies AdminReply[]
   createdAt    DateTime     @default(now())
@@ -51,8 +70,9 @@ model AdminReply {
 }
 
 model Settings {
-  id                       Int     @id @unique @default(1)
-  shop                     String  @unique
+  id                       Int     @id @default(autoincrement())
+  shopId                   String  @unique
+  shop                     Shop    @relation(fields: [shopId], references: [id])
   enableSentimentAnalysis  Boolean @default(false)
   enableAutomatedResponses Boolean @default(false)
   allowMedia               Boolean @default(true)
@@ -60,8 +80,9 @@ model Settings {
 }
 
 model ShopSubscription {
-  id           String   @id @default(cuid())
-  shop         String   @unique
+  id           Int      @id @default(autoincrement())
+  shopId       String
+  shop         Shop     @relation(fields: [shopId], references: [id])
   subscription String   @default("Free Plan")
   updatedAt    DateTime @updatedAt
 }

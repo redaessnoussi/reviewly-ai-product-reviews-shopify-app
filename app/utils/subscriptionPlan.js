@@ -31,12 +31,30 @@ export async function updateSubscriptionPlan(shop, subscription) {
 
 // Function to seed subscription plans for a list of shops
 export async function seedSubscriptionPlans(defaultPlan) {
-  // Check if any shop subscriptions exist
-  const subscriptionsCount = await prisma.shopSubscription.count();
-  if (subscriptionsCount === 0) {
-    // Seed with initial data if none exist
-    await prisma.shopSubscription.createMany({
-      data: defaultPlan,
-    });
+  try {
+    for (const plan of defaultPlan) {
+      const { shop, subscription } = plan;
+      let shopName = shop.replace(".myshopify.com", "");
+
+      // Ensure the shop record exists
+      const shopRecord = await prisma.shop.upsert({
+        where: { id: shop },
+        update: {},
+        create: {
+          id: shop,
+          name: shopName, // You should replace this with the actual shop name
+          shopifyDomain: `${shop}`, // Adjust this if needed
+        },
+      });
+
+      // Upsert the subscription plan for the shop
+      await prisma.shopSubscription.upsert({
+        where: { shopId: shopRecord.id },
+        update: { subscription },
+        create: { shopId: shopRecord.id, subscription },
+      });
+    }
+  } catch (e) {
+    console.log("subscriptionPlan.js", e);
   }
 }

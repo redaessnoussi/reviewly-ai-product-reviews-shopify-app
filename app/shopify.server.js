@@ -53,33 +53,48 @@ const shopify = shopifyApp({
 
   hooks: {
     afterAuth: async ({ session }) => {
-      console.log("App installed, initializing settings...");
-      const shop = session.shop;
+      try {
+        console.log("App installed, initializing settings...");
+        const shop = session.shop;
 
-      console.log("Seeding initial subscription plans...");
+        console.log("Seeding initial subscription plans...");
 
-      // Seed default subscription plan
-      const defaultPlan = [{ shop, subscription: "Free Plan" }];
-      await seedSubscriptionPlans(defaultPlan);
+        // Seed default subscription plan
+        const defaultPlan = [{ shop, subscription: "Free Plan" }];
+        await seedSubscriptionPlans(defaultPlan);
 
-      // Check if settings already exist
-      const existingSettings = await prisma.settings.findUnique({
-        where: { shop },
-      });
-
-      // If settings do not exist, create them with default values
-      if (!existingSettings) {
-        await prisma.settings.create({
-          data: {
-            shop,
-            enableSentimentAnalysis: false,
-            enableAutomatedResponses: false,
-            allowMedia: true,
+        // Ensure the shop record exists
+        const shopRecord = await prisma.shop.upsert({
+          where: { id: shop },
+          update: {},
+          create: {
+            id: shop,
+            name: shop, // Replace this with the actual shop name if available
+            shopifyDomain: `${shop}.myshopify.com`, // Adjust this if needed
           },
         });
-        console.log(`Default settings created for shop: ${shop}`);
-      } else {
-        console.log(`Settings already exist for shop: ${shop}`);
+
+        // Check if settings already exist
+        const existingSettings = await prisma.settings.findUnique({
+          where: { shopId: shopRecord.id },
+        });
+
+        // If settings do not exist, create them with default values
+        if (!existingSettings) {
+          await prisma.settings.create({
+            data: {
+              shopId: shopRecord.id,
+              enableSentimentAnalysis: false,
+              enableAutomatedResponses: false,
+              allowMedia: true,
+            },
+          });
+          console.log(`Default settings created for shop: ${shop}`);
+        } else {
+          console.log(`Settings already exist for shop: ${shop}`);
+        }
+      } catch (e) {
+        console.log("shopify.server.js", e);
       }
 
       // Register webhooks

@@ -13,9 +13,28 @@ CREATE TABLE "Session" (
 );
 
 -- CreateTable
+CREATE TABLE "Shop" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "shopifyDomain" TEXT NOT NULL,
+
+    CONSTRAINT "Shop_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Product" (
+    "id" SERIAL NOT NULL,
+    "shopId" TEXT NOT NULL,
+    "productId" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+
+    CONSTRAINT "Product_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Review" (
     "id" SERIAL NOT NULL,
-    "productId" TEXT NOT NULL,
+    "productId" INTEGER NOT NULL,
     "comment" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -44,8 +63,8 @@ CREATE TABLE "AdminReply" (
 
 -- CreateTable
 CREATE TABLE "Settings" (
-    "id" INTEGER NOT NULL DEFAULT 1,
-    "shop" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "shopId" TEXT NOT NULL,
     "enableSentimentAnalysis" BOOLEAN NOT NULL DEFAULT false,
     "enableAutomatedResponses" BOOLEAN NOT NULL DEFAULT false,
     "allowMedia" BOOLEAN NOT NULL DEFAULT true,
@@ -56,8 +75,8 @@ CREATE TABLE "Settings" (
 
 -- CreateTable
 CREATE TABLE "ShopSubscription" (
-    "id" TEXT NOT NULL,
-    "shop" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "shopId" TEXT NOT NULL,
     "subscription" TEXT NOT NULL DEFAULT 'Free Plan',
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -65,13 +84,25 @@ CREATE TABLE "ShopSubscription" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Settings_id_key" ON "Settings"("id");
+CREATE UNIQUE INDEX "Shop_name_key" ON "Shop"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Settings_shop_key" ON "Settings"("shop");
+CREATE UNIQUE INDEX "Shop_shopifyDomain_key" ON "Shop"("shopifyDomain");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ShopSubscription_shop_key" ON "ShopSubscription"("shop");
+CREATE UNIQUE INDEX "Settings_shopId_key" ON "Settings"("shopId");
+
+-- AddForeignKey
+ALTER TABLE "Product" ADD CONSTRAINT "Product_shopId_fkey" FOREIGN KEY ("shopId") REFERENCES "Shop"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Review" ADD CONSTRAINT "Review_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "AdminReply" ADD CONSTRAINT "AdminReply_reviewId_fkey" FOREIGN KEY ("reviewId") REFERENCES "Review"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Settings" ADD CONSTRAINT "Settings_shopId_fkey" FOREIGN KEY ("shopId") REFERENCES "Shop"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ShopSubscription" ADD CONSTRAINT "ShopSubscription_shopId_fkey" FOREIGN KEY ("shopId") REFERENCES "Shop"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
