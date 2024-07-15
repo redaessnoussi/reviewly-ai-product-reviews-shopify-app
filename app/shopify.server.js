@@ -9,7 +9,10 @@ import {
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import { restResources } from "@shopify/shopify-api/rest/admin/2024-04";
 import prisma from "./db.server";
-import { seedSubscriptionPlans } from "./utils/subscriptionPlan";
+import {
+  ensureShopRecord,
+  seedSubscriptionPlans,
+} from "./utils/subscriptionPlan";
 
 export const BASIC_PLAN = "Basic Plan";
 export const STANDARD_PLAN = "Standard Plan";
@@ -58,28 +61,15 @@ const shopify = shopifyApp({
         const shop = session.shop;
 
         console.log("Seeding initial subscription plans...");
-
-        // Seed default subscription plan
         const defaultPlan = [{ shop, subscription: "Free Plan" }];
         await seedSubscriptionPlans(defaultPlan);
 
-        // Ensure the shop record exists
-        const shopRecord = await prisma.shop.upsert({
-          where: { id: shop },
-          update: {},
-          create: {
-            id: shop,
-            name: shop, // Replace this with the actual shop name if available
-            shopifyDomain: `${shop}.myshopify.com`, // Adjust this if needed
-          },
-        });
+        const shopRecord = await ensureShopRecord(shop);
 
-        // Check if settings already exist
         const existingSettings = await prisma.settings.findUnique({
           where: { shopId: shopRecord.id },
         });
 
-        // If settings do not exist, create them with default values
         if (!existingSettings) {
           await prisma.settings.create({
             data: {
@@ -97,7 +87,6 @@ const shopify = shopifyApp({
         console.log("shopify.server.js", e);
       }
 
-      // Register webhooks
       await registerWebhooks({ session });
     },
   },

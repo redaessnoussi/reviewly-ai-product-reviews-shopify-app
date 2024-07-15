@@ -85,4 +85,6 @@ model ShopSubscription {
   shop         Shop     @relation(fields: [shopId], references: [id])
   subscription String   @default("Free Plan")
   updatedAt    DateTime @updatedAt
+
+  @@unique([shopId])
 }

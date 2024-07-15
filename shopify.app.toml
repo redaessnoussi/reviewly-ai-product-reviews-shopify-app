@@ -3,7 +3,7 @@
 client_id = "6f355af6c9e006c8557d57d8c2566fcb"
 name = ""
 handle = "reviewly-ai-reviews"
-application_url = "https://gui-blessed-turbo-hands.trycloudflare.com"
+application_url = "https://teacher-offered-companies-gamma.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://gui-blessed-turbo-hands.trycloudflare.com/auth/callback",
-  "https://gui-blessed-turbo-hands.trycloudflare.com/auth/shopify/callback",
-  "https://gui-blessed-turbo-hands.trycloudflare.com/api/auth/callback"
+  "https://teacher-offered-companies-gamma.trycloudflare.com/auth/callback",
+  "https://teacher-offered-companies-gamma.trycloudflare.com/auth/shopify/callback",
+  "https://teacher-offered-companies-gamma.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
