@@ -1,9 +1,9 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "6f355af6c9e006c8557d57d8c2566fcb"
-name = ""
-handle = "reviewly-ai-reviews"
-application_url = "https://teacher-offered-companies-gamma.trycloudflare.com"
+name = "reviewly"
+handle = "reviewly-ai"
+application_url = "https://runtime-inspiration-expanding-meal.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://teacher-offered-companies-gamma.trycloudflare.com/auth/callback",
-  "https://teacher-offered-companies-gamma.trycloudflare.com/auth/shopify/callback",
-  "https://teacher-offered-companies-gamma.trycloudflare.com/api/auth/callback"
+  "https://runtime-inspiration-expanding-meal.trycloudflare.com/auth/callback",
+  "https://runtime-inspiration-expanding-meal.trycloudflare.com/auth/shopify/callback",
+  "https://runtime-inspiration-expanding-meal.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
