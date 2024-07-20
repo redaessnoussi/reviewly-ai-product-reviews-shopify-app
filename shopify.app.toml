@@ -3,7 +3,7 @@
 client_id = "6f355af6c9e006c8557d57d8c2566fcb"
 name = "reviewly"
 handle = "reviewly-ai"
-application_url = "https://runtime-inspiration-expanding-meal.trycloudflare.com"
+application_url = "https://danny-fort-film-father.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://runtime-inspiration-expanding-meal.trycloudflare.com/auth/callback",
-  "https://runtime-inspiration-expanding-meal.trycloudflare.com/auth/shopify/callback",
-  "https://runtime-inspiration-expanding-meal.trycloudflare.com/api/auth/callback"
+  "https://danny-fort-film-father.trycloudflare.com/auth/callback",
+  "https://danny-fort-film-father.trycloudflare.com/auth/shopify/callback",
+  "https://danny-fort-film-father.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

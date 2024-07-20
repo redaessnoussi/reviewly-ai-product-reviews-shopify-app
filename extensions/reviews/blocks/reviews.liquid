@@ -22,6 +22,7 @@
         <form id="review-form">
           <input type="hidden" id="product-id" value="{{ block.settings.product.id }}">
           <input type="hidden" id="shop-name" value="{{ shop.domain }}">
+          <input type="hidden" id="product-title" value="{{ product.title }}">
           <label for="comment">Comments:</label>
           <textarea id="comment" name="comment" required></textarea>
           <label for="firstName">First Name:</label>
@@ -43,7 +44,12 @@
   </div>
 </div>
 
-<script>
+{% comment %} <script src="{{ 'isFeatureEnabled.js' | asset_url }}" defer></script> {% endcomment %}
+<script
+  type="module"
+>
+  import { isFeatureEnabled } from '{{ 'isFeatureEnabled.js' | asset_url }}';
+
   function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
   }
@@ -51,12 +57,21 @@
   document.addEventListener('DOMContentLoaded', async function () {
     const shopName = document.getElementById('shop-name').value;
     const productId = document.getElementById('product-id').value;
+    const productTitle = document.getElementById('product-title').value;
 
-    const apiEndpoint = 'https://seemed-poster-fears-bottles.trycloudflare.com';
+    console.log("product title : ", productTitle)
+
+    const apiEndpoint = 'https://danny-fort-film-father.trycloudflare.com';
 
     // Fetch settings
-    const settingsResponse = await fetch(`${apiEndpoint}/api/settings`);
+    const settingsResponse = await fetch(`${apiEndpoint}/api/settings?shopName=${shopName}`);
     const settings = await settingsResponse.json();
+
+    //Fetch subscription plan
+    const subscriptionPlanResponse = await fetch(`${apiEndpoint}/api/subscription-plan?shopName=${shopName}`);
+    const subscriptionPlan = await subscriptionPlanResponse.json();
+
+    console.log("liquid subscriptionPlan", subscriptionPlan)
 
     const enableSentimentAnalysis = settings.enableSentimentAnalysis;
     const enableAutomatedResponses = settings.enableAutomatedResponses;
@@ -64,7 +79,7 @@
 
     // Fetch global ratings
     const fetchRatings = async () => {
-      const response = await fetch(`${apiEndpoint}/api/ratings?productId=${productId}`);
+      const response = await fetch(`${apiEndpoint}/api/ratings?productId=${productId}&shopName=${shopName}`);
       const data = await response.json();
       const { totalReviews, ratingsDistribution } = data;
 
@@ -89,7 +104,7 @@
 
     // Fetch existing reviews
     const fetchReviews = async () => {
-      const response = await fetch(`${apiEndpoint}/api/reviews?productId=${productId}`);
+      const response = await fetch(`${apiEndpoint}/api/reviews?productId=${productId}&shopName=${shopName}`);
       const reviews = await response.json();
       const reviewsList = document.getElementById('reviews-list');
       reviewsList.innerHTML = ''; // Clear the list before appending new reviews
@@ -174,17 +189,21 @@
 
       formData.append('productId', document.getElementById('product-id').value);
       formData.append('shopName', document.getElementById('shop-name').value);
-      
+      formData.append('productTitle', document.getElementById('product-title').value);
 
       // Log FormData entries
       {% comment %} for (const [key, value] of formData.entries()) {
         console.log(`${key}:`, value);
       } {% endcomment %}
 
-      if (!allowMedia) {
+      if (!allowMedia || !isFeatureEnabled(
+        subscriptionPlan,
+        "Images or Video",
+      )) {
         formData.delete('image');
         formData.delete('video');
       }
+  
 
       await fetch(`${apiEndpoint}/api/reviews`, {
         method: 'POST',
@@ -213,8 +232,12 @@
       });
     });
 
+
     // Conditionally show/hide media inputs
-    if (!allowMedia) {
+    if (!allowMedia || !isFeatureEnabled(
+      subscriptionPlan,
+      "Images or Video",
+    )) {
       document.querySelector('label[for="image"]').style.display = 'none';
       document.querySelector('#image').style.display = 'none';
       document.querySelector('label[for="video"]').style.display = 'none';

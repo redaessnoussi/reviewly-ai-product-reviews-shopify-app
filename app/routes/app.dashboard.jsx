@@ -52,7 +52,7 @@ export async function loader({ request }) {
     const subscription = billingCheck.appSubscriptions[0];
     console.log(`Shop is on ${subscription.name} (id ${subscription.id})`);
 
-    console.log("\n\n pricing shop name:", shop);
+    console.log("pricing shop name:", shop);
 
     return json({ plan: subscription });
   } catch (error) {

@@ -5,7 +5,7 @@ import {
   STANDARD_PLAN,
   PREMIUM_PLAN,
 } from "../shopify.server";
-import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
+// import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
 
 export const loader = async ({ request }) => {
   const { billing, session } = await authenticate.admin(request);
@@ -31,7 +31,7 @@ export const loader = async ({ request }) => {
       throw new Error("Invalid plan selected");
   }
 
-  await updateSubscriptionPlan(shop, selectedPlan);
+  // await updateSubscriptionPlan(shop, selectedPlan);
 
   await billing.require({
     plans: [selectedPlan],

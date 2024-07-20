@@ -31,21 +31,15 @@ model Shop {
   products      Product[]
   settings      Settings?
   subscriptions ShopSubscription[]
-}
-
-model Product {
-  id        Int      @id @default(autoincrement())
-  shopId    String
-  shop      Shop     @relation(fields: [shopId], references: [id])
-  productId String
-  title     String
-  reviews   Review[]
+  reviews       Review[]
 }
 
 model Review {
   id           Int          @id @default(autoincrement())
-  productId    Int
-  product      Product      @relation(fields: [productId], references: [id])
+  productId    String
+  product      Product      @relation(fields: [productId], references: [productId])
+  shopId       String
+  shop         Shop         @relation(fields: [shopId], references: [id])
   comment      String
   adminReplies AdminReply[]
   createdAt    DateTime     @default(now())
@@ -58,6 +52,15 @@ model Review {
   imageUrl     String?
   videoUrl     String?
   approved     Boolean      @default(false)
+}
+
+model Product {
+  id        Int      @id @default(autoincrement())
+  shopId    String
+  shop      Shop     @relation(fields: [shopId], references: [id])
+  productId String   @unique // Ensure productId is unique
+  title     String
+  reviews   Review[]
 }
 
 model AdminReply {

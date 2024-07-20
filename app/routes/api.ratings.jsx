@@ -1,18 +1,23 @@
 import { json } from "@remix-run/node";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
-// import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }) => {
   const url = new URL(request.url);
   const productId = url.searchParams.get("productId");
+  const shopName = url.searchParams.get("shopName");
 
-  if (!productId) {
-    return json({ error: "Product ID is required" }, { status: 400 });
+  console.log("shopName", shopName);
+
+  if (!productId || !shopName) {
+    return json(
+      { error: "Product ID and shop name is required" },
+      { status: 400 },
+    );
   }
 
   const reviews = await prisma.review.findMany({
-    where: { productId, approved: true },
+    where: { productId, shopId: shopName, approved: true },
     select: { rating: true },
   });
 

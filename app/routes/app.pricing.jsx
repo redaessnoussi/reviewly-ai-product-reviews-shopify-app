@@ -19,6 +19,7 @@ import {
   PREMIUM_PLAN,
   STANDARD_PLAN,
 } from "../shopify.server";
+import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
 
 export async function loader({ request }) {
   const { billing, session } = await authenticate.admin(request);
@@ -38,10 +39,14 @@ export async function loader({ request }) {
 
     console.log("\n\n pricing shop name:", shop);
 
+    await updateSubscriptionPlan(shop, subscription.name);
+
     return json({ plan: subscription });
   } catch (error) {
     if (error.message === "No active plan") {
       // Update to Free Plan if no active plan
+
+      await updateSubscriptionPlan(shop, "Free Plan");
 
       return json({ plan: { name: "Free Plan" } });
     }
@@ -72,9 +77,11 @@ const planData = [
     action: "Upgrade to Basic",
     url: "/app/upgrade?plan=Basic Plan",
     features: [
-      "Advanced Sentiment Analysis",
+      "Basic Sentiment Analysis",
       "Manual Responses",
+      "No Review Moderation",
       "Basic Analytics",
+      "Images or Video",
       "Email Notifications",
     ],
   },
@@ -88,11 +95,11 @@ const planData = [
     features: [
       "Advanced Sentiment Analysis",
       "Manual Responses",
+      "Review Moderation",
       "Basic Analytics",
+      "Images or Video",
       "Email Notifications",
       "Automated Responses",
-      "Images or Video",
-      "Review Moderation",
     ],
   },
   {
@@ -105,13 +112,12 @@ const planData = [
     features: [
       "Advanced Sentiment Analysis",
       "Manual Responses",
-      "Basic Analytics",
+      "Review Moderation",
+      "Advanced Analytics",
+      "Images or Video",
       "Email Notifications",
       "Automated Responses",
-      "Images or Video",
-      "Review Moderation",
-      "Bulk Actions",
-      "Advanced Analytics",
+      "Bulk Actions (Approve/Reject Reviews)",
       "Review Export/Import",
     ],
   },

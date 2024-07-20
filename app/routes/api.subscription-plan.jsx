@@ -1,6 +1,5 @@
 import { json } from "@remix-run/node";
 import prisma from "../db.server";
-import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }) => {
   const url = new URL(request.url);
@@ -10,15 +9,13 @@ export const loader = async ({ request }) => {
     return json({ error: "Shop name ID is required" }, { status: 400 });
   }
 
-  const settings = await prisma.settings.findFirst({
+  const subscriptionPlan = await prisma.shopSubscription.findFirst({
     where: { shopId: shopName },
   });
 
-  console.log("settings", settings);
-
-  if (!settings) {
-    return json({ error: "Settings not found" }, { status: 404 });
+  if (!subscriptionPlan) {
+    return json({ error: "Subscription plan not found" }, { status: 404 });
   }
 
-  return json(settings);
+  return json(subscriptionPlan.subscription);
 };

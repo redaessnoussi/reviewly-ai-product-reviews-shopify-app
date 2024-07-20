@@ -14,13 +14,17 @@ import { handleReviewModeration } from "../utils/handleReviewModeration";
 export const loader = async ({ request }) => {
   const url = new URL(request.url);
   const productId = url.searchParams.get("productId");
+  const shopName = url.searchParams.get("shopName");
 
-  if (!productId) {
-    return json({ error: "Product ID is required" }, { status: 400 });
+  if (!productId || !shopName) {
+    return json(
+      { error: "Product ID and Shop ID is required" },
+      { status: 400 },
+    );
   }
 
   const reviews = await prisma.review.findMany({
-    where: { productId, approved: true },
+    where: { productId, shopId: shopName, approved: true },
     orderBy: { createdAt: "desc" }, // Order by createdAt in descending order
     include: {
       adminReplies: true, // Include admin replies in the fetched reviews
@@ -34,29 +38,66 @@ export const action = async ({ request }) => {
   const formData = await request.formData();
 
   const data = Object.fromEntries(formData);
-  const { productId, comment, firstName, lastName, rating, shopName } = data;
+  const {
+    productId,
+    comment,
+    firstName,
+    lastName,
+    rating,
+    shopName,
+    productTitle,
+  } = data;
 
-  if (!productId || !comment || !firstName || rating == null) {
+  if (!productId || !comment || !firstName || rating == null || !shopName) {
     return json(
-      { error: "Product ID, comment, first name, and rating are required" },
+      {
+        error:
+          "Shop name, Product ID, comment, first name, and rating are required",
+      },
       { status: 400 },
     );
   }
 
+  // Check if the product exists
+  let product = await prisma.product.findUnique({ where: { productId } });
+
+  // If the product does not exist, create it
+  if (!product) {
+    product = await prisma.product.create({
+      data: {
+        productId,
+        title: productTitle || "Default Product Title",
+        shopId: shopName, // Assuming shopName is used as shopId
+      },
+    });
+  }
+
   // Fetch settings
-  const settings = await prisma.settings.findFirst({ where: { id: 1 } });
+  const settings = await prisma.settings.findFirst({
+    where: { shopId: shopName },
+  });
+  if (!settings) {
+    return json({ error: "Settings not found for the shop" }, { status: 404 });
+  }
 
   let subscriptionPlan = await getSubscriptionPlan(shopName);
 
   console.log("Current Subscription plan: ", subscriptionPlan);
-
-  if (!settings.allowMedia) {
+  if (
+    !settings.allowMedia ||
+    !isFeatureEnabled(subscriptionPlan, "Images or Video")
+  ) {
     formData.delete("image");
     formData.delete("video");
   }
 
   // Handle media
-  const { imageUrl, videoUrl } = await handleMedia(formData, settings, storage);
+  const { imageUrl, videoUrl } = await handleMedia(
+    formData,
+    settings,
+    storage,
+    subscriptionPlan,
+  );
 
   // Handle sentiment analysis
   const sentiment = await handleSentimentAnalysis(
@@ -84,6 +125,7 @@ export const action = async ({ request }) => {
     const review = await prisma.review.create({
       data: {
         productId,
+        shopId: shopName, // Ensure shopId is set
         comment,
         createdAt: new Date(),
         firstName,

@@ -5,7 +5,6 @@ import {
   STANDARD_PLAN,
   PREMIUM_PLAN,
 } from "../shopify.server";
-import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
 
 export const loader = async ({ request }) => {
   const { billing, session } = await authenticate.admin(request);
@@ -23,8 +22,6 @@ export const loader = async ({ request }) => {
     isTest: true,
     prorate: true,
   });
-
-  await updateSubscriptionPlan(shop, "Free Plan");
 
   return redirect("/app/pricing");
 };
