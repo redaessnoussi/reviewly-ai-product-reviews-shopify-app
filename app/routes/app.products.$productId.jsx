@@ -42,33 +42,48 @@ export const loader = async ({ request, params }) => {
   const { billing, admin } = await authenticate.admin(request);
   const productId = params.productId;
 
-  const billingCheck = await billing.require({
-    plans: [BASIC_PLAN, STANDARD_PLAN, PREMIUM_PLAN],
-    isTest: true,
-    onFailure: () => {
-      throw new Error("No active plan");
-    },
-  });
+  const fetchProductDetails = async () => {
+    const response = await admin.graphql(PRODUCT_QUERY, {
+      variables: { id: `gid://shopify/Product/${productId}` },
+    });
 
-  const subscription = billingCheck.appSubscriptions[0];
-  console.log(`Shop is on ${subscription.name} (id ${subscription.id})`);
+    const {
+      data: { product },
+    } = await response.json();
+    return product;
+  };
 
-  // Fetch product details from Shopify
-  const response = await admin.graphql(PRODUCT_QUERY, {
-    variables: { id: `gid://shopify/Product/${productId}` },
-  });
+  const fetchReviews = async () => {
+    return await prisma.review.findMany({
+      where: { productId },
+      orderBy: { createdAt: "desc" },
+    });
+  };
 
-  const {
-    data: { product },
-  } = await response.json();
+  try {
+    const billingCheck = await billing.require({
+      plans: [BASIC_PLAN, STANDARD_PLAN, PREMIUM_PLAN],
+      isTest: true,
+      onFailure: () => {
+        throw new Error("No active plan");
+      },
+    });
 
-  // Fetch reviews for the product from Prisma
-  const reviews = await prisma.review.findMany({
-    where: { productId },
-    orderBy: { createdAt: "desc" },
-  });
+    const subscription = billingCheck.appSubscriptions[0];
+    console.log(`Shop is on ${subscription.name} (id ${subscription.id})`);
 
-  return json({ plan: subscription || "Free Plan", product, reviews });
+    const product = await fetchProductDetails();
+    const reviews = await fetchReviews();
+
+    return json({ plan: subscription, product, reviews });
+  } catch (error) {
+    if (error.message === "No active plan") {
+      const product = await fetchProductDetails();
+      const reviews = await fetchReviews();
+      return json({ plan: { name: "Free Plan" }, product, reviews });
+    }
+    throw error;
+  }
 };
 
 export default function ProductReviews() {
@@ -81,7 +96,7 @@ export default function ProductReviews() {
   const fetcher = useFetcher();
 
   // const billingPlan = useBillingPlan();
-  const isBulkActionsEnabled = isFeatureEnabled(plan, "Bulk Actions");
+  const isBulkActionsEnabled = isFeatureEnabled(plan.name, "Bulk Actions");
 
   const { selectedResources, allResourcesSelected, handleSelectionChange } =
     useIndexResourceState(reviews);
