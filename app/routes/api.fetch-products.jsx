@@ -20,7 +20,8 @@ const PRODUCTS_QUERY = `
 `;
 
 export const loader = async ({ request }) => {
-  const { admin } = await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
+  const { shop } = session;
 
   // Fetch products with their review counts from Prisma
   const reviews = await prisma.review.groupBy({
@@ -34,6 +35,7 @@ export const loader = async ({ request }) => {
     _max: {
       createdAt: true,
     },
+    where: { shopId: shop },
   });
 
   const productIds = reviews.map((review) => review.productId);
@@ -53,6 +55,7 @@ export const loader = async ({ request }) => {
     _count: {
       id: true,
     },
+    where: { shopId: shop },
   });
 
   // Process sentiment counts

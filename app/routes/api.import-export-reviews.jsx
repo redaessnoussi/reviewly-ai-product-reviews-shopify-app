@@ -19,14 +19,21 @@ const PRODUCTS_QUERY = `
 `;
 
 export const loader = async ({ request }) => {
-  const { admin } = await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
+  const { shop } = session;
+
+  console.log("api.import-export-reviews.jsx shopName", shop);
+
+  if (!shop) {
+    return json({ error: "Shop ID is required" }, { status: 400 });
+  }
 
   if (action === "reviews-count") {
     const productId = url.searchParams.get("productId");
     const count = await prisma.review.count({
-      where: { productId },
+      where: { productId, shopId: shop },
     });
     return json({ count });
   }
@@ -49,7 +56,13 @@ function getSentimentFromRating(rating) {
 }
 
 export const action = async ({ request }) => {
+  const { session } = await authenticate.admin(request);
+  const { shop } = session;
   const contentType = request.headers.get("Content-Type");
+
+  if (!shop) {
+    return json({ error: "Shop ID is required" }, { status: 400 });
+  }
 
   if (contentType.includes("application/json")) {
     const formData = await request.json();
@@ -57,7 +70,7 @@ export const action = async ({ request }) => {
 
     if (actionType === "export") {
       const reviews = await prisma.review.findMany({
-        where: { productId },
+        where: { productId, shopId: shop },
         select: fields.reduce((acc, field) => {
           acc[field] = true;
           return acc;
@@ -84,6 +97,7 @@ export const action = async ({ request }) => {
 
     if (actionType === "import") {
       const productId = formData.get("productId");
+      const productTitle = formData.get("productTitle");
       const file = formData.get("file");
 
       const reviews = await new Promise((resolve, reject) => {
@@ -94,6 +108,21 @@ export const action = async ({ request }) => {
         Readable.from(file.stream()).pipe(parser);
       });
 
+      // Check if the product exists
+      let product = await prisma.product.findUnique({ where: { productId } });
+
+      // If the product does not exist, create it
+      if (!product) {
+        // Assuming productTitle can be derived or should be provided in another way
+        product = await prisma.product.create({
+          data: {
+            productId,
+            title: productTitle || "Default Product Title",
+            shopId: shop,
+          },
+        });
+      }
+
       await prisma.review.createMany({
         data: reviews.map((review) => ({
           ...review,
@@ -102,6 +131,7 @@ export const action = async ({ request }) => {
             review.sentiment ||
             getSentimentFromRating(parseFloat(review.rating)),
           productId,
+          shopId: shop,
         })),
       });
 

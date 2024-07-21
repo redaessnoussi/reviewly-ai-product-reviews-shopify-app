@@ -3,13 +3,18 @@
 import { json } from "@remix-run/node";
 // import { authenticate } from "../shopify.server";
 import prisma from "../db.server";
+import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }) => {
-  const totalReviews = await prisma.review.count();
+  const { session } = await authenticate.admin(request);
+  const { shop } = session;
+
+  const totalReviews = await prisma.review.count({ where: { shopId: shop } });
   const averageRating = await prisma.review.aggregate({
     _avg: {
       rating: true,
     },
+    where: { shopId: shop },
   });
   const reviewsByTime = await prisma.review.groupBy({
     by: ["createdAt"],
@@ -19,6 +24,7 @@ export const loader = async ({ request }) => {
     orderBy: {
       createdAt: "asc",
     },
+    where: { shopId: shop },
   });
 
   const aggregatedReviews = reviewsByTime.reduce((acc, review) => {
@@ -40,14 +46,17 @@ export const loader = async ({ request }) => {
     _count: {
       id: true,
     },
+    where: { shopId: shop },
   });
   const sentimentCounts = await prisma.review.groupBy({
     by: ["sentiment"],
     _count: {
       id: true,
     },
+    where: { shopId: shop },
   });
   const recentReviews = await prisma.review.findMany({
+    where: { shopId: shop },
     orderBy: {
       createdAt: "desc",
     },

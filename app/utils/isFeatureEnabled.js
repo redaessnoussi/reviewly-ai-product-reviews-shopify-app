@@ -31,7 +31,7 @@ export const isFeatureEnabled = (userPlan, feature) => {
       "Images or Video",
       "Email Notifications",
       "Automated Responses",
-      "Bulk Actions (Approve/Reject Reviews)",
+      "Bulk Actions",
       "Review Export/Import",
     ],
   };

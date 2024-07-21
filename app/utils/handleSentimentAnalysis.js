@@ -10,7 +10,7 @@ function getSentimentFromRating(rating) {
   }
 }
 
-async function analyzeSentiment(text, retries = 3, delay = 1000) {
+async function analyzeSentiment(text, retries = 5, delay = 1000) {
   const url =
     "https://api-inference.huggingface.co/models/distilbert-base-uncased-finetuned-sst-2-english";
   const options = {
@@ -29,6 +29,8 @@ async function analyzeSentiment(text, retries = 3, delay = 1000) {
       if (!response.ok) {
         throw new Error(`Failed to analyze sentiment: ${response.statusText}`);
       }
+
+      console.log("sentiment api attempt", attempt);
 
       const data = await response.json();
 

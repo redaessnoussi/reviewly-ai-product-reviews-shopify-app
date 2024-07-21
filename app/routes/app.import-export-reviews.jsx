@@ -163,8 +163,12 @@ export default function ImportExportReviews() {
     setMessage("");
     const formData = new FormData();
     const productId = selectedProduct.split("/").pop(); // Extract the product ID
+    const productTitle = productOptions.find(
+      (product) => product.value === selectedProduct,
+    ).label;
     formData.append("file", file);
     formData.append("productId", productId);
+    formData.append("productTitle", productTitle);
     formData.append("actionType", "import");
 
     try {
