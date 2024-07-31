@@ -26,11 +26,11 @@
           <input type="hidden" id="shop-name" value="{{ shop.domain }}">
           <input type="hidden" id="product-title" value="{{ product.title }}">
           <div class="star-rating" data-rating="0">
-            <span class="star" data-rating="1">★</span>
-            <span class="star" data-rating="2">★</span>
-            <span class="star" data-rating="3">★</span>
-            <span class="star" data-rating="4">★</span>
-            <span class="star" data-rating="5">★</span>
+            <span class="star clickable" data-rating="1">★</span>
+            <span class="star clickable" data-rating="2">★</span>
+            <span class="star clickable" data-rating="3">★</span>
+            <span class="star clickable" data-rating="4">★</span>
+            <span class="star clickable" data-rating="5">★</span>
             <input type="hidden" id="rating" name="rating" required>
           </div>
           <label for="comment">Comments:</label>
@@ -180,31 +180,51 @@
       } else {
         reviews.forEach((review) => {
           const reviewElement = document.createElement('div');
-          reviewElement.className = 'box';
+          reviewElement.className = 'review-box';
           const reviewDate = new Date(review.createdAt).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
           });
+    
+          // Create star rating HTML
+          const starRating = `
+            <div class="star-rating" data-rating="${review.rating}">
+              ${Array(5).fill().map((_, i) => `<span class="star" data-rating="${i + 1}">★</span>`).join('')}
+            </div>
+          `;
+    
           reviewElement.innerHTML = `
-            <div style="display: flex; align-items: center; margin-bottom: 10px;">
-              <img src="https://via.placeholder.com/48" alt="Customer Avatar">
-              <div style="margin-left: 10px;">
-                <p>${review.firstName} ${review.lastName ? review.lastName : ''} | ${review.rating}</p>
-                <p>${reviewDate}</p>
+            <div class="review-header">
+              <div class="avatar-container">
+                <img src="https://via.placeholder.com/48" alt="Customer Avatar" class="avatar">
+              </div>
+              <div class="review-info">
+                <p class="reviewer-name">${review.firstName} ${review.lastName ? review.lastName : ''}</p>
+                ${starRating}
+                <p class="review-date"> <span class="reviewer-name">Reviewed on </span>${reviewDate}</p>
               </div>
             </div>
-            ${review.imageUrl ? `<img src="${review.imageUrl}" alt="Review Image" />` : ''}
-            ${review.videoUrl ? `<video src="${review.videoUrl}" controls></video>` : ''}
-            <p>${review.comment}${
-            enableSentimentAnalysis && review.sentiment ? ` | ${capitalizeFirstLetter(review.sentiment)}` : ''
-          }</p>
-            ${enableAutomatedResponses && review.AiResponse ? `<p>${review.AiResponse}</p>` : ''}
+            <div class="review-content">
+              ${review.imageUrl ? `<img src="${review.imageUrl}" alt="Review Image" class="review-image" />` : ''}
+              ${review.videoUrl ? `<video src="${review.videoUrl}" controls class="review-video"></video>` : ''}
+              <p class="review-comment">${review.comment}</p>
+              ${enableSentimentAnalysis && review.sentiment ? 
+        `<span class="sentiment-badge ${review.sentiment.toLowerCase()}">${capitalizeFirstLetter(review.sentiment)}</span>` 
+        : ''}
+      ${enableAutomatedResponses && review.AiResponse ? 
+        `<div class="ai-response">
+          <h4>AI Response:</h4>
+          <p>${review.AiResponse}</p>
+        </div>` 
+        : ''}            </div>
             {% if customer.tags contains "admin" %}
             <button class="reply-button" data-review-id="${review.id}">Reply to Customer</button>
             {% endif %}
             <div class="admin-replies" id="admin-replies-${review.id}">
-               ${review.adminReplies ? review.adminReplies.map(reply => `<p>${reply.reply} - ${new Date(reply.createdAt).toLocaleDateString('en-US')}</p>`).join('') : ''}
+              ${review.adminReplies ? review.adminReplies.map(reply => `
+                <p class="review-date"> <span class="reviewer-name">Replied on </span>${new Date(reply.createdAt).toLocaleDateString('en-US')}</p>
+                <p class="admin-reply">${reply.reply}</p>`).join('') : ''}
             </div>
           `;
           reviewsList.appendChild(reviewElement);
