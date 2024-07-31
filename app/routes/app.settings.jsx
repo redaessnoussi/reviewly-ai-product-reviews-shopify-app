@@ -10,6 +10,7 @@ import {
   PREMIUM_PLAN,
   STANDARD_PLAN,
 } from "../shopify.server";
+import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
 
 export const loader = async ({ request }) => {
   const { billing, session } = await authenticate.admin(request);
@@ -29,7 +30,7 @@ export const loader = async ({ request }) => {
 
     console.log("\n\n pricing shop name:", shop);
 
-    console.log("loader,shop:", shop);
+    await updateSubscriptionPlan(shop, subscription.name);
 
     if (!shop) {
       return json({ error: "Shop parameter is missing" }, { status: 400 });
@@ -47,6 +48,8 @@ export const loader = async ({ request }) => {
   } catch (error) {
     if (error.message === "No active plan") {
       // Update to Free Plan if no active plan
+
+      await updateSubscriptionPlan(shop, "Free Plan");
 
       const settings = await prisma.settings.findUnique({
         where: { shopId: shop },

@@ -25,6 +25,7 @@ import capitalizeFirstLetter from "../utils/capitalizeFirstLetter";
 import { useEffect, useState } from "react";
 import { truncateText } from "../utils/truncateText";
 import { isFeatureEnabled } from "../utils/isFeatureEnabled";
+import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
 
 // GraphQL query to fetch product data
 const PRODUCT_QUERY = `
@@ -39,8 +40,9 @@ const PRODUCT_QUERY = `
 `;
 
 export const loader = async ({ request, params }) => {
-  const { billing, admin } = await authenticate.admin(request);
+  const { billing, admin, session } = await authenticate.admin(request);
   const productId = params.productId;
+  const shop = session.shop;
 
   const fetchProductDetails = async () => {
     const response = await admin.graphql(PRODUCT_QUERY, {
@@ -72,6 +74,8 @@ export const loader = async ({ request, params }) => {
     const subscription = billingCheck.appSubscriptions[0];
     console.log(`Shop is on ${subscription.name} (id ${subscription.id})`);
 
+    await updateSubscriptionPlan(shop, subscription.name);
+
     const product = await fetchProductDetails();
     const reviews = await fetchReviews();
 
@@ -80,6 +84,9 @@ export const loader = async ({ request, params }) => {
     if (error.message === "No active plan") {
       const product = await fetchProductDetails();
       const reviews = await fetchReviews();
+
+      await updateSubscriptionPlan(shop, "Free Plan");
+
       return json({ plan: { name: "Free Plan" }, product, reviews });
     }
     throw error;

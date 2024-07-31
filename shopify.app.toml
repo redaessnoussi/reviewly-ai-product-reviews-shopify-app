@@ -3,7 +3,7 @@
 client_id = "6f355af6c9e006c8557d57d8c2566fcb"
 name = "reviewly"
 handle = "reviewly-ai"
-application_url = "https://classical-permanent-hood-beautifully.trycloudflare.com"
+application_url = "https://syndrome-aerospace-album-propecia.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://classical-permanent-hood-beautifully.trycloudflare.com/auth/callback",
-  "https://classical-permanent-hood-beautifully.trycloudflare.com/auth/shopify/callback",
-  "https://classical-permanent-hood-beautifully.trycloudflare.com/api/auth/callback"
+  "https://syndrome-aerospace-album-propecia.trycloudflare.com/auth/callback",
+  "https://syndrome-aerospace-album-propecia.trycloudflare.com/auth/shopify/callback",
+  "https://syndrome-aerospace-album-propecia.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

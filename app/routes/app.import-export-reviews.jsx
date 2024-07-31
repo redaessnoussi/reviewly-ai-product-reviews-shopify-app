@@ -22,6 +22,7 @@ import {
   PREMIUM_PLAN,
   STANDARD_PLAN,
 } from "../shopify.server";
+import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
 
 export async function loader({ request }) {
   const { billing, session } = await authenticate.admin(request);
@@ -41,10 +42,13 @@ export async function loader({ request }) {
 
     console.log("\n\n pricing shop name:", shop);
 
+    await updateSubscriptionPlan(shop, subscription.name);
+
     return json({ plan: subscription });
   } catch (error) {
     if (error.message === "No active plan") {
       // Update to Free Plan if no active plan
+      await updateSubscriptionPlan(shop, "Free Plan");
 
       return json({ plan: { name: "Free Plan" } });
     }

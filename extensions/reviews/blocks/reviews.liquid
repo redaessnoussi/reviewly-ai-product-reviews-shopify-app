@@ -96,7 +96,7 @@
 
     console.log("product title : ", productTitle)    
 
-    const apiEndpoint = 'https://classical-permanent-hood-beautifully.trycloudflare.com';
+    const apiEndpoint = 'https://syndrome-aerospace-album-propecia.trycloudflare.com';
 
     // Fetch settings
     const settingsResponse = await fetch(`${apiEndpoint}/api/settings?shopName=${shopName}`);
@@ -112,46 +112,71 @@
     const enableAutomatedResponses = settings.enableAutomatedResponses;
     const allowMedia = settings.allowMedia;
 
+    let allReviews = []; // Store all reviews globally
+
     // Fetch global ratings
     const fetchRatings = async () => {
       const response = await fetch(`${apiEndpoint}/api/ratings?productId=${productId}&shopName=${shopName}`);
       const data = await response.json();
       const { totalReviews, ratingsDistribution } = data;
-
+    
       if (totalReviews) {
         const globalRatings = document.getElementById('global-ratings');
         globalRatings.innerHTML = `
           <p>Total Reviews: ${totalReviews}</p>
-          <div>
-            ${ratingsDistribution
-              .map(
-                (rating, index) => `
-              <p>${5 - index} stars: ${rating.count} (${rating.percentage}%)</p>
-            `
-              )
-              .join('')}
+      <button id="show-all-reviews" class="filter-button">Show All Reviews</button>
+      <div class="ratings-distribution">
+        ${ratingsDistribution.map((rating, index) => `
+          <div class="rating-row" data-rating="${5 - index}">
+            <span class="star-count">${5 - index} stars:</span>
+            <div class="progress-bar-container">
+              <div class="progress-bar" data-percentage="${rating.percentage}"></div>
+            </div>
+            <span class="percentage">${rating.count} (${rating.percentage}%)</span>
           </div>
+        `).join('')}
+      </div>
         `;
+    
+        // Animate progress bars
+        setTimeout(() => {
+          document.querySelectorAll('.progress-bar').forEach(bar => {
+            const percentage = bar.getAttribute('data-percentage');
+            bar.style.width = `${percentage}%`;
+          });
+        }, 100);
+
+        // Add click event listeners to rating rows
+    document.querySelectorAll('.rating-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const rating = row.getAttribute('data-rating');
+        filterReviews(rating);
+      });
+    });
+
+    // Add event listener for "Show All Reviews" button
+    document.getElementById('show-all-reviews').addEventListener('click', () => {
+      filterReviews('all');
+    });
       }
     };
 
-    await fetchRatings();
+    {% comment %} await fetchRatings(); {% endcomment %}
 
-    // Fetch existing reviews
     const fetchReviews = async () => {
       const response = await fetch(`${apiEndpoint}/api/reviews?productId=${productId}&shopName=${shopName}`);
-      const reviews = await response.json();
+      allReviews = await response.json(); // Store all reviews
+      displayReviews(allReviews); // Display all reviews initially
+    };
+
+    const displayReviews = (reviews) => {
       const reviewsList = document.getElementById('reviews-list');
       reviewsList.innerHTML = ''; // Clear the list before appending new reviews
-
+    
       if (reviews.length === 0) {
         const noReviewsMessage = document.createElement('p');
-        noReviewsMessage.innerHTML = 'Be the first to <span class="no-reviews-message"> write a review</span>';
+        noReviewsMessage.innerHTML = 'No reviews found.';
         reviewsList.appendChild(noReviewsMessage);
-
-        noReviewsMessage.addEventListener('click', () => {
-          document.getElementById('open-modal').classList.add('is-active');
-        });
       } else {
         reviews.forEach((review) => {
           const reviewElement = document.createElement('div');
@@ -161,7 +186,6 @@
             month: 'long',
             day: 'numeric',
           });
-          console.log("review.adminReplies", review.adminReplies)
           reviewElement.innerHTML = `
             <div style="display: flex; align-items: center; margin-bottom: 10px;">
               <img src="https://via.placeholder.com/48" alt="Customer Avatar">
@@ -185,7 +209,7 @@
           `;
           reviewsList.appendChild(reviewElement);
         });
-
+    
         {% if customer.tags contains "admin" %}
         document.querySelectorAll('.reply-button').forEach(button => {
           button.addEventListener('click', () => {
@@ -199,6 +223,25 @@
         {% endif %}
       }
     };
+    
+    const filterReviews = (rating) => {
+      const filteredReviews = rating === 'all' 
+        ? allReviews 
+        : allReviews.filter(review => review.rating === parseInt(rating));
+      displayReviews(filteredReviews);
+    
+      // Update active filter visual indication
+      document.querySelectorAll('.rating-row').forEach(row => {
+        row.classList.remove('active-filter');
+      });
+      if (rating !== 'all') {
+        document.querySelector(`.rating-row[data-rating="${rating}"]`).classList.add('active-filter');
+      }
+    };
+    
+    // Call these functions in your DOMContentLoaded event listener
+    await fetchRatings();
+    await fetchReviews();
 
     const submitAdminReply = async (reviewId, replyText) => {
       const response = await fetch(`${apiEndpoint}/api/admin-reply`, {
@@ -216,7 +259,7 @@
       }
     };
 
-    await fetchReviews();
+    {% comment %} await fetchReviews(); {% endcomment %}
 
     // Handle form submission
     document.getElementById('review-form').addEventListener('submit', async function (event) {
