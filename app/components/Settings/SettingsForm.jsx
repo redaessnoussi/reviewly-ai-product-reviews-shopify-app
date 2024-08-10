@@ -1,5 +1,3 @@
-// SettingsForm.jsx
-
 import React, { useState, useEffect } from "react";
 import {
   Card,
@@ -14,6 +12,7 @@ import {
   Tooltip,
   Link,
   Text,
+  Banner,
 } from "@shopify/polaris";
 import { Form, useNavigate } from "@remix-run/react";
 import { isFeatureEnabled } from "../../utils/isFeatureEnabled";
@@ -30,6 +29,7 @@ const SettingsForm = ({ initialSettings, billingPlan }) => {
     initialSettings.reviewModeration,
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
 
   const navigate = useNavigate();
 
@@ -56,29 +56,41 @@ const SettingsForm = ({ initialSettings, billingPlan }) => {
     setIsSaving(true);
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    await fetch("/app/settings", {
-      method: "post",
-      body: formData,
-    });
-    setIsSaving(false);
+    try {
+      const response = await fetch("/app/settings", {
+        method: "post",
+        body: formData,
+      });
+      if (response.ok) {
+        setShowSuccessBanner(true);
+        setTimeout(() => setShowSuccessBanner(false), 5000);
+      }
+    } catch (error) {
+      console.error("Error saving settings:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <Page title="App Settings">
       <Layout>
+        {showSuccessBanner && (
+          <Layout.Section>
+            <Banner
+              title="Settings updated"
+              tone="success"
+              onDismiss={() => setShowSuccessBanner(false)}
+            >
+              Your settings have been successfully updated.
+            </Banner>
+          </Layout.Section>
+        )}
         <Layout.Section>
           <Card sectioned>
             <Form method="post" onSubmit={handleSubmit}>
               <FormLayout>
-                <Tooltip
-                  content="Upgrade to access this feature"
-                  // active={
-                  //   !isFeatureEnabled(
-                  //     billingPlan,
-                  //     "Advanced Sentiment Analysis",
-                  //   )
-                  // }
-                >
+                <Tooltip content="Upgrade to access this feature">
                   <Checkbox
                     label={"Enable Sentiment Analysis"}
                     checked={enableSentimentAnalysis}
@@ -97,10 +109,7 @@ const SettingsForm = ({ initialSettings, billingPlan }) => {
                 </Tooltip>
                 <IsFeatureEnabled feature={"Advanced Sentiment Analysis"} />
 
-                <Tooltip
-                  content="Upgrade to access this feature"
-                  // active={!isFeatureEnabled(billingPlan, "Automated Responses")}
-                >
+                <Tooltip content="Upgrade to access this feature">
                   <Checkbox
                     label={"Enable Automated Responses"}
                     checked={enableAutomatedResponses}
@@ -116,10 +125,7 @@ const SettingsForm = ({ initialSettings, billingPlan }) => {
                 </Tooltip>
                 <IsFeatureEnabled feature={"Automated Responses"} />
 
-                <Tooltip
-                  content="Upgrade to access this feature"
-                  // active={!isFeatureEnabled(billingPlan, "Images or Video")}
-                >
+                <Tooltip content="Upgrade to access this feature">
                   <Checkbox
                     label={"Allow Images or Videos"}
                     checked={allowMedia}
@@ -131,10 +137,7 @@ const SettingsForm = ({ initialSettings, billingPlan }) => {
                 </Tooltip>
                 <IsFeatureEnabled feature={"Images or Video"} />
 
-                <Tooltip
-                  content="Upgrade to access this feature"
-                  // active={!isFeatureEnabled(billingPlan, "Review Moderation")}
-                >
+                <Tooltip content="Upgrade to access this feature">
                   <Select
                     label={"Review Moderation"}
                     options={[
