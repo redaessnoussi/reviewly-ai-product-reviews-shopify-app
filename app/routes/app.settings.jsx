@@ -89,6 +89,7 @@ export const action = async ({ request }) => {
   const allowMedia = data.get("allowMedia") === "on";
   const reviewModeration =
     data.get("reviewModeration") || prevSettings.reviewModeration;
+  const notificationEmail = data.get("notificationEmail") || null;
 
   await prisma.settings.update({
     where: { shopId: shop },
@@ -97,6 +98,7 @@ export const action = async ({ request }) => {
       enableAutomatedResponses,
       allowMedia,
       reviewModeration,
+      notificationEmail,
     },
   });
 
@@ -104,9 +106,7 @@ export const action = async ({ request }) => {
 };
 
 export default function Settings() {
-  const { settings } = useLoaderData();
-
-  const { plan } = useLoaderData();
+  const { settings, plan } = useLoaderData();
 
   console.log("settings", settings);
 
@@ -115,6 +115,7 @@ export default function Settings() {
     enableAutomatedResponses: settings.enableAutomatedResponses,
     allowMedia: settings.allowMedia,
     reviewModeration: settings.reviewModeration,
+    notificationEmail: settings.notificationEmail,
   };
 
   return (

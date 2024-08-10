@@ -80,6 +80,7 @@ model Settings {
   enableAutomatedResponses Boolean @default(false)
   allowMedia               Boolean @default(true)
   reviewModeration         String  @default("none") // options: "none", "all", "negative"
+  notificationEmail        String?
 }
 
 model ShopSubscription {

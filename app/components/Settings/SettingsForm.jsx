@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Card,
   FormLayout,
   Checkbox,
-  Button,
   Page,
   Layout,
   PageActions,
   Select,
-  Icon,
   Tooltip,
   Link,
   Text,
   Banner,
+  TextField,
 } from "@shopify/polaris";
 import { Form, useNavigate } from "@remix-run/react";
 import { isFeatureEnabled } from "../../utils/isFeatureEnabled";
@@ -27,6 +26,9 @@ const SettingsForm = ({ initialSettings, billingPlan }) => {
   const [allowMedia, setAllowMedia] = useState(initialSettings.allowMedia);
   const [reviewModeration, setReviewModeration] = useState(
     initialSettings.reviewModeration,
+  );
+  const [notificationEmail, setNotificationEmail] = useState(
+    initialSettings.notificationEmail || "",
   );
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
@@ -154,6 +156,17 @@ const SettingsForm = ({ initialSettings, billingPlan }) => {
                   />
                 </Tooltip>
                 <IsFeatureEnabled feature={"Review Moderation"} />
+
+                {isFeatureEnabled(billingPlan, "Email Notifications") && (
+                  <TextField
+                    label="Notification Email"
+                    type="email"
+                    value={notificationEmail}
+                    onChange={(value) => setNotificationEmail(value)}
+                    name="notificationEmail"
+                    helpText="Email address to receive review notifications"
+                  />
+                )}
 
                 <PageActions
                   primaryAction={{

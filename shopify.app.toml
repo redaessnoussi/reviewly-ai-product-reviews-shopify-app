@@ -1,9 +1,9 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "6f355af6c9e006c8557d57d8c2566fcb"
-name = "reviewly"
+name = "Reviewly"
 handle = "reviewly-ai"
-application_url = "https://julia-chaos-numerous-photo.trycloudflare.com"
+application_url = "https://studies-specials-parish-curious.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://julia-chaos-numerous-photo.trycloudflare.com/auth/callback",
-  "https://julia-chaos-numerous-photo.trycloudflare.com/auth/shopify/callback",
-  "https://julia-chaos-numerous-photo.trycloudflare.com/api/auth/callback"
+  "https://studies-specials-parish-curious.trycloudflare.com/auth/callback",
+  "https://studies-specials-parish-curious.trycloudflare.com/auth/shopify/callback",
+  "https://studies-specials-parish-curious.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

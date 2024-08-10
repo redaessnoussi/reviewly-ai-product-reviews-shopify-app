@@ -145,9 +145,9 @@ export const action = async ({ request }) => {
       "Email Notifications",
     );
 
-    if (isEmailNotificationEnabled) {
+    if (isEmailNotificationEnabled && settings.notificationEmail) {
       await sendEmail({
-        to: "redavan95@gmail.com", // Replace with the admin's email address
+        to: settings.notificationEmail, // Replace with the admin's email address
         subject: "New Product Review Submitted",
         productId: productId,
         firstName: firstName,
@@ -156,8 +156,6 @@ export const action = async ({ request }) => {
         comment: comment,
       });
     }
-
-    console.log("ha howa:", review);
 
     return json(review);
   } catch (error) {
