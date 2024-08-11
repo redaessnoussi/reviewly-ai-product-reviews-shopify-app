@@ -1,7 +1,21 @@
 // app.dashboard.jsx
 
-import { useEffect, useState } from "react";
-import { Page, Card, Text, Box, Grid, Button } from "@shopify/polaris";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Page,
+  Card,
+  Text,
+  Box,
+  Grid,
+  Button,
+  ResourceList,
+  ResourceItem,
+  Avatar,
+  Banner,
+  Select,
+  SkeletonDisplayText,
+  SkeletonBodyText,
+} from "@shopify/polaris";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -24,6 +38,7 @@ import {
   STANDARD_PLAN,
 } from "../shopify.server";
 import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
+import RatingStars from "../components/Home/RatingStars";
 
 ChartJS.register(
   CategoryScale,
@@ -71,12 +86,11 @@ export async function loader({ request }) {
 
 export default function HomeDashboard() {
   const [stats, setStats] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedDateRange, setSelectedDateRange] = useState("allTime");
 
   const { plan } = useLoaderData();
-
-  console.log("plan", plan);
-
-  // const plan = useplan();
   const navigate = useNavigate();
 
   const isAdvancedAnalyticsEnabled = isFeatureEnabled(
@@ -84,19 +98,54 @@ export default function HomeDashboard() {
     "Advanced Analytics",
   );
 
-  // Now you can use plan in your component logic
-  console.log("Settings,Current billing plan:", plan);
+  const fetchStats = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/stats-dashboard?range=${selectedDateRange}`,
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch stats");
+      }
+      const data = await response.json();
+      setStats(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedDateRange]);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      const response = await fetch("/api/stats-dashboard");
-      const data = await response.json();
-      console.log("stats", data);
-      setStats(data);
-    };
-
     fetchStats();
+  }, [fetchStats]);
+
+  const handleDateRangeChange = useCallback((value) => {
+    setSelectedDateRange(value);
   }, []);
+
+  if (isLoading) {
+    return (
+      <Page title="Home Dashboard">
+        <Card>
+          <SkeletonDisplayText size="small" />
+          <SkeletonBodyText lines={3} />
+        </Card>
+      </Page>
+    );
+  }
+
+  if (error) {
+    return (
+      <Page title="Home Dashboard">
+        <Banner status="critical">{error}</Banner>
+      </Page>
+    );
+  }
+
+  // Now you can use plan in your component logic
+  console.log("Settings,Current billing plan:", plan);
 
   if (!stats) {
     return (
@@ -131,7 +180,9 @@ export default function HomeDashboard() {
   };
 
   const ratingsDistributionData = {
-    labels: ratingsDistribution.map((rating) => `Rating ${rating.rating}`),
+    labels: ratingsDistribution.map((rating) =>
+      rating.rating == 1 ? `${rating.rating} Star` : `${rating.rating} Stars`,
+    ),
     datasets: [
       {
         label: "Ratings Distribution",
@@ -178,97 +229,137 @@ export default function HomeDashboard() {
       {stats.totalReviews == 0 ? (
         <Text>There is no reviews</Text>
       ) : (
-        <Grid gap="400">
-          <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6, xl: 6 }}>
-            <Card roundedAbove="sm">
-              <Text as="h2" variant="headingSm">
-                Total Reviews
-              </Text>
-              <Box paddingBlockStart="200">
-                <Text as="p" variant="bodyMd">
-                  {totalReviews}
-                </Text>
-              </Box>
-            </Card>
-          </Grid.Cell>
+        <>
+          <Grid>
+            <Grid.Cell columnSpan={{ xs: 12, sm: 12, md: 12, lg: 12, xl: 12 }}>
+              <Card>
+                <Select
+                  label="Date Range"
+                  options={[
+                    { label: "All Time", value: "allTime" },
+                    { label: "Last 7 Days", value: "last7Days" },
+                    { label: "Last 30 Days", value: "last30Days" },
+                    { label: "Last 90 Days", value: "last90Days" },
+                  ]}
+                  onChange={handleDateRangeChange}
+                  value={selectedDateRange}
+                />
+              </Card>
+            </Grid.Cell>
 
-          <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6, xl: 6 }}>
-            <Card roundedAbove="sm">
-              <Text as="h2" variant="headingSm">
-                Average Rating
-              </Text>
-              <Box paddingBlockStart="200">
-                <Text as="p" variant="bodyMd">
+            <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 6, xl: 6 }}>
+              <Card>
+                <Text variant="headingMd" as="h2">
+                  Average Rating
+                </Text>
+                <Text variant="headingLg" as="p">
                   {averageRating.toFixed(2)}
                 </Text>
-              </Box>
-            </Card>
-          </Grid.Cell>
-
-          {/* Reviews over time for premium plan */}
-          <Grid.Cell columnSpan={{ xs: 12, sm: 12, md: 12, lg: 12, xl: 12 }}>
-            {!isAdvancedAnalyticsEnabled ? (
-              <UpgradePlanCard header="Reviews Over Time" />
-            ) : (
-              <Card roundedAbove="sm">
-                <Text as="h2" variant="headingSm">
-                  Reviews Over Time
-                </Text>
-                <Box paddingBlockStart="200">
-                  <Line data={reviewsOverTimeData} />
-                </Box>
+                <RatingStars value={Math.round(averageRating)} />
               </Card>
-            )}
-          </Grid.Cell>
+            </Grid.Cell>
 
-          {/* Ratings distribution for premium plan */}
-          <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6, xl: 6 }}>
-            {!isAdvancedAnalyticsEnabled ? (
-              <UpgradePlanCard header="Ratings Distribution" />
-            ) : (
-              <Card roundedAbove="sm">
-                <Text as="h2" variant="headingSm">
-                  Ratings Distribution
+            <Grid.Cell columnSpan={{ xs: 6, sm: 3, md: 3, lg: 6, xl: 6 }}>
+              <Card>
+                <Text variant="headingMd" as="h2">
+                  Total Reviews
                 </Text>
-                <Box paddingBlockStart="200">
-                  <Line data={ratingsDistributionData} />
-                </Box>
-              </Card>
-            )}
-          </Grid.Cell>
-
-          {/* Sentiment counts for premium plan */}
-          <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6, xl: 6 }}>
-            {!isAdvancedAnalyticsEnabled ? (
-              <UpgradePlanCard header="Sentiment Analysis" />
-            ) : (
-              <Card roundedAbove="sm">
-                <Text as="h2" variant="headingSm">
-                  Sentiment Analysis
+                <Text variant="headingLg" as="p">
+                  {totalReviews}
                 </Text>
-                <Box paddingBlockStart="200">
-                  <Line data={sentimentCountsData} />
-                </Box>
               </Card>
-            )}
-          </Grid.Cell>
+            </Grid.Cell>
 
-          <Grid.Cell columnSpan={{ xs: 12, sm: 12, md: 12, lg: 12, xl: 12 }}>
-            <Card roundedAbove="sm">
-              <Text as="h2" variant="headingSm">
-                Recent Reviews
-              </Text>
-              <Box paddingBlockStart="200">
-                {recentReviews.map((review) => (
-                  <Text key={review.id}>
-                    {review.comment} -{" "}
-                    {new Date(review.createdAt).toLocaleString()}
+            <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 12, xl: 12 }}>
+              {!isAdvancedAnalyticsEnabled ? (
+                <UpgradePlanCard header="Reviews Over Time" />
+              ) : (
+                <Card>
+                  <Text variant="headingMd" as="h2">
+                    Reviews Over Time
                   </Text>
-                ))}
-              </Box>
-            </Card>
-          </Grid.Cell>
-        </Grid>
+                  <Box paddingBlockStart="400">
+                    <Line data={reviewsOverTimeData} />
+                  </Box>
+                </Card>
+              )}
+            </Grid.Cell>
+
+            <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6, xl: 6 }}>
+              {!isAdvancedAnalyticsEnabled ? (
+                <UpgradePlanCard header="Ratings Distribution" />
+              ) : (
+                <Card>
+                  <Text variant="headingMd" as="h2">
+                    Ratings Distribution
+                  </Text>
+                  <Box paddingBlockStart="400">
+                    <Line data={ratingsDistributionData} />
+                  </Box>
+                </Card>
+              )}
+            </Grid.Cell>
+
+            <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6, xl: 6 }}>
+              {!isAdvancedAnalyticsEnabled ? (
+                <UpgradePlanCard header="Sentiment Analysis" />
+              ) : (
+                <Card>
+                  <Text variant="headingMd" as="h2">
+                    Sentiment Analysis
+                  </Text>
+                  <Box paddingBlockStart="400">
+                    <Line data={sentimentCountsData} />
+                  </Box>
+                </Card>
+              )}
+            </Grid.Cell>
+
+            <Grid.Cell columnSpan={{ xs: 12, sm: 12, md: 12, lg: 12, xl: 12 }}>
+              <Card>
+                <Text variant="headingMd" as="h2">
+                  Recent Reviews
+                </Text>
+                <Box paddingBlockStart="400">
+                  <ResourceList
+                    resourceName={{ singular: "review", plural: "reviews" }}
+                    items={recentReviews}
+                    renderItem={(review) => (
+                      <ResourceItem
+                        id={review.id}
+                        media={
+                          <Avatar
+                            customer
+                            size="medium"
+                            name={`${review.firstName} ${review.lastName}`}
+                          />
+                        }
+                        accessibilityLabel={`Review by ${review.firstName} ${review.lastName}`}
+                      >
+                        <Text variant="bodyMd" fontWeight="bold" as="h3">
+                          {review.firstName} {review.lastName}
+                        </Text>
+                        <Box paddingBlockStart="100">
+                          <RatingStars value={review.rating} />
+                        </Box>
+                        <Box paddingBlockStart="100">
+                          <Text variant="bodyMd" as="p">
+                            {review.comment}
+                          </Text>
+                        </Box>
+                        <Box paddingBlockStart="100">
+                          <Text variant="bodySm" color="subdued">
+                            {new Date(review.createdAt).toLocaleString()}
+                          </Text>
+                        </Box>
+                      </ResourceItem>
+                    )}
+                  />
+                </Box>
+              </Card>
+            </Grid.Cell>
+          </Grid>
+        </>
       )}
     </Page>
   );

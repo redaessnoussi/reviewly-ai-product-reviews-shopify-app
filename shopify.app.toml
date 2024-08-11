@@ -3,7 +3,7 @@
 client_id = "6f355af6c9e006c8557d57d8c2566fcb"
 name = "Reviewly"
 handle = "reviewly-ai"
-application_url = "https://studies-specials-parish-curious.trycloudflare.com"
+application_url = "https://worse-delaware-mysql-plaintiff.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://studies-specials-parish-curious.trycloudflare.com/auth/callback",
-  "https://studies-specials-parish-curious.trycloudflare.com/auth/shopify/callback",
-  "https://studies-specials-parish-curious.trycloudflare.com/api/auth/callback"
+  "https://worse-delaware-mysql-plaintiff.trycloudflare.com/auth/callback",
+  "https://worse-delaware-mysql-plaintiff.trycloudflare.com/auth/shopify/callback",
+  "https://worse-delaware-mysql-plaintiff.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
