@@ -3,7 +3,7 @@
 client_id = "6f355af6c9e006c8557d57d8c2566fcb"
 name = "Reviewly"
 handle = "reviewly-ai"
-application_url = "https://worse-delaware-mysql-plaintiff.trycloudflare.com"
+application_url = "https://chargers-colombia-pleasure-printer.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://worse-delaware-mysql-plaintiff.trycloudflare.com/auth/callback",
-  "https://worse-delaware-mysql-plaintiff.trycloudflare.com/auth/shopify/callback",
-  "https://worse-delaware-mysql-plaintiff.trycloudflare.com/api/auth/callback"
+  "https://chargers-colombia-pleasure-printer.trycloudflare.com/auth/callback",
+  "https://chargers-colombia-pleasure-printer.trycloudflare.com/auth/shopify/callback",
+  "https://chargers-colombia-pleasure-printer.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
