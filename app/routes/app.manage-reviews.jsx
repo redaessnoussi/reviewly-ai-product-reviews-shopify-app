@@ -1,17 +1,13 @@
 // app.manage-reviews.jsx
 
 import { useCallback, useEffect, useState } from "react";
-import { json, Link, useLoaderData, useNavigate } from "@remix-run/react";
+import { json, useLoaderData, useNavigate } from "@remix-run/react";
 import {
-  Card,
   IndexTable,
-  TextField,
-  Pagination,
   Thumbnail,
   Text,
   Page,
   Badge,
-  Button,
   useIndexResourceState,
   useSetIndexFiltersMode,
   RangeSlider,

@@ -35,5 +35,5 @@ export const action = async ({ request }) => {
     return json({ error: "Unknown action type" }, { status: 400 });
   }
 
-  return json({ success: true });
+  return json({ success: true, actionType });
 };
