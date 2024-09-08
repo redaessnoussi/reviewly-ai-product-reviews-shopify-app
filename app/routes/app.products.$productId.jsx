@@ -15,23 +15,17 @@ import {
   Badge,
   Button,
   useIndexResourceState,
-  Spinner,
-  Modal,
   IndexFilters,
   useSetIndexFiltersMode,
   RangeSlider,
   ChoiceList,
   useBreakpoints,
-  Thumbnail,
-  TextContainer,
-  TextField,
   Banner,
   SkeletonPage,
   Layout,
   SkeletonBodyText,
   SkeletonDisplayText,
 } from "@shopify/polaris";
-import { ImageIcon } from "@shopify/polaris-icons";
 import capitalizeFirstLetter from "../utils/capitalizeFirstLetter";
 import { useCallback, useEffect, useState } from "react";
 import { truncateText } from "../utils/truncateText";
@@ -49,6 +43,29 @@ const PRODUCT_QUERY = `
     }
   }
 `;
+
+const SkeletonLoader = () => {
+  return (
+    <SkeletonPage primaryAction>
+      <Layout>
+        <Layout.Section>
+          <LegacyCard sectioned>
+            <SkeletonBodyText lines={1} />
+            <div style={{ marginTop: "1rem" }}>
+              <SkeletonDisplayText size="small" />
+              <div style={{ height: "200px", marginTop: "1rem" }}>
+                <SkeletonBodyText lines={10} />
+              </div>
+            </div>
+            <div style={{ marginTop: "1rem" }}>
+              <SkeletonBodyText lines={1} />
+            </div>
+          </LegacyCard>
+        </Layout.Section>
+      </Layout>
+    </SkeletonPage>
+  );
+};
 
 export const loader = async ({ request, params }) => {
   const { billing, admin, session } = await authenticate.admin(request);
@@ -116,39 +133,18 @@ export const loader = async ({ request, params }) => {
   }
 };
 
-function SkeletonLoader() {
-  return (
-    <SkeletonPage primaryAction>
-      <Layout>
-        <Layout.Section>
-          <LegacyCard sectioned>
-            <SkeletonBodyText lines={1} />
-            <div style={{ marginTop: "1rem" }}>
-              <SkeletonDisplayText size="small" />
-              <div style={{ height: "200px", marginTop: "1rem" }}>
-                <SkeletonBodyText lines={10} />
-              </div>
-            </div>
-            <div style={{ marginTop: "1rem" }}>
-              <SkeletonBodyText lines={1} />
-            </div>
-          </LegacyCard>
-        </Layout.Section>
-      </Layout>
-    </SkeletonPage>
-  );
-}
-
 export default function ProductReviews() {
   const { plan, product, reviews: initialReviews } = useLoaderData();
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState(initialReviews);
   const [queryValue, setQueryValue] = useState("");
   const [sortSelected, setSortSelected] = useState(["createdAt desc"]);
-  const fetcher = useFetcher();
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10; // Adjust as needed
   const [actionMessage, setActionMessage] = useState(null);
+  const navigate = useNavigate();
+  const fetcher = useFetcher();
+  const itemsPerPage = 10; // Adjust as needed
+  const smDown = useBreakpoints().smDown;
 
   const isBulkActionsEnabled = isFeatureEnabled(plan.name, "Bulk Actions");
 
@@ -156,6 +152,10 @@ export default function ProductReviews() {
     useIndexResourceState(reviews);
 
   const { mode, setMode } = useSetIndexFiltersMode();
+
+  useEffect(() => {
+    setLoading(false);
+  }, [product, reviews]);
 
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data) {
@@ -389,9 +389,7 @@ export default function ProductReviews() {
           {new Date(createdAt).toLocaleDateString()}
         </IndexTable.Cell>
         <IndexTable.Cell>
-          <Text as="span" alignment="center" numeric>
-            {rating}
-          </Text>
+          <RatingStars value={rating} />
         </IndexTable.Cell>
         <IndexTable.Cell>
           <Badge
@@ -444,10 +442,19 @@ export default function ProductReviews() {
     },
   ];
 
+  if (loading) {
+    return <SkeletonLoader />;
+  }
+
   return (
     <Page
       title={`Reviews for ${product.title}`}
       breadcrumbs={[{ content: "Products", url: "/app/manage-reviews" }]}
+      primaryAction={
+        <Button onClick={() => navigate("/app/manage-reviews")}>
+          Back to Products
+        </Button>
+      }
     >
       <Layout>
         {actionMessage && (
@@ -489,7 +496,7 @@ export default function ProductReviews() {
               setMode={setMode}
             />
             <IndexTable
-              condensed={useBreakpoints().smDown}
+              condensed={smDown}
               resourceName={resourceName}
               itemCount={sortedReviews.length}
               selectedItemsCount={
