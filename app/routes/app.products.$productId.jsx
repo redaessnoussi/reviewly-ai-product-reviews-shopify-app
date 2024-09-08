@@ -1,5 +1,3 @@
-// app/routes/app.products.$productId.jsx
-
 import { json } from "@remix-run/node";
 import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import {
@@ -57,12 +55,6 @@ export const loader = async ({ request, params }) => {
   const productId = params.productId;
   const shop = session.shop;
 
-  const url = new URL(request.url);
-  const sortKey = url.searchParams.get("sortKey") || "createdAt";
-  const sortDirection = url.searchParams.get("sortDirection") || "desc";
-  const page = parseInt(url.searchParams.get("page") || "1", 10);
-  const itemsPerPage = 10;
-
   const fetchProductDetails = async () => {
     const response = await admin.graphql(PRODUCT_QUERY, {
       variables: { id: `gid://shopify/Product/${productId}` },
@@ -75,14 +67,8 @@ export const loader = async ({ request, params }) => {
   };
 
   const fetchReviews = async () => {
-    const skip = (page - 1) * itemsPerPage;
-    const orderBy = { [sortKey]: sortDirection.toLowerCase() };
-
     const reviews = await prisma.review.findMany({
       where: { productId },
-      orderBy,
-      skip,
-      take: itemsPerPage,
       include: { adminReplies: true },
     });
 
@@ -101,8 +87,6 @@ export const loader = async ({ request, params }) => {
     });
 
     const subscription = billingCheck.appSubscriptions[0];
-    console.log(`Shop is on ${subscription.name} (id ${subscription.id})`);
-
     await updateSubscriptionPlan(shop, subscription.name);
 
     const product = await fetchProductDetails();
@@ -111,11 +95,8 @@ export const loader = async ({ request, params }) => {
     return json({
       plan: subscription,
       product,
-      reviews,
+      reviews: reviews || [], // Ensure reviews is an array
       totalReviews,
-      currentPage: page,
-      sortKey,
-      sortDirection,
     });
   } catch (error) {
     if (error.message === "No active plan") {
@@ -127,11 +108,8 @@ export const loader = async ({ request, params }) => {
       return json({
         plan: { name: "Free Plan" },
         product,
-        reviews,
+        reviews: reviews || [], // Ensure reviews is an array
         totalReviews,
-        currentPage: page,
-        sortKey,
-        sortDirection,
       });
     }
     throw error;
@@ -162,148 +140,25 @@ function SkeletonLoader() {
 }
 
 export default function ProductReviews() {
-  const {
-    plan,
-    product,
-    reviews: initialReviews,
-    totalReviews,
-    currentPage: initialPage,
-    sortKey: initialSortKey,
-    sortDirection: initialSortDirection,
-  } = useLoaderData();
-  const [loading, setLoading] = useState(false);
+  const { plan, product, reviews: initialReviews } = useLoaderData();
+  const [loading, setLoading] = useState(true);
+  const [reviews, setReviews] = useState(initialReviews);
   const [queryValue, setQueryValue] = useState("");
-  const [sortSelected, setSortSelected] = useState([
-    `${initialSortKey} ${initialSortDirection}`,
-  ]);
-  const [currentPage, setCurrentPage] = useState(initialPage);
-  const [selectedReview, setSelectedReview] = useState(null);
-  const [replyText, setReplyText] = useState("");
-  const [replyStatus, setReplyStatus] = useState(null);
-  const navigate = useNavigate();
+  const [sortSelected, setSortSelected] = useState(["createdAt desc"]);
   const fetcher = useFetcher();
-  const breakpoints = useBreakpoints();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10; // Adjust as needed
 
   const isBulkActionsEnabled = isFeatureEnabled(plan.name, "Bulk Actions");
 
   const { selectedResources, allResourcesSelected, handleSelectionChange } =
-    useIndexResourceState(initialReviews);
+    useIndexResourceState(reviews);
 
   const { mode, setMode } = useSetIndexFiltersMode();
-  const [itemStrings] = useState(["All", "Positive", "Negative"]);
-  const [selected, setSelected] = useState(0);
-  const [ratingFilter, setRatingFilter] = useState([0, 5]);
-  const [sentimentFilter, setSentimentFilter] = useState([]);
 
   useEffect(() => {
     setLoading(false);
-  }, [initialReviews]);
-
-  const handleTabChange = useCallback((selectedTabIndex) => {
-    setSelected(selectedTabIndex);
-    if (selectedTabIndex === 0) {
-      setSentimentFilter([]);
-    } else if (selectedTabIndex === 1) {
-      setSentimentFilter(["POSITIVE"]);
-    } else if (selectedTabIndex === 2) {
-      setSentimentFilter(["NEGATIVE"]);
-    }
-  }, []);
-
-  const handleSort = useCallback(
-    (selected) => {
-      setSortSelected(selected);
-      const [key, direction] = selected[0].split(" ");
-      setLoading(true);
-      navigate(`?sortKey=${key}&sortDirection=${direction}&page=1`, {
-        replace: true,
-      });
-    },
-    [navigate],
-  );
-
-  const handleFiltersQueryChange = useCallback(
-    (value) => setQueryValue(value),
-    [],
-  );
-
-  const handleRatingFilterChange = useCallback(
-    (value) => setRatingFilter(value),
-    [],
-  );
-
-  const handleSentimentFilterChange = useCallback(
-    (value) => setSentimentFilter(value),
-    [],
-  );
-
-  const handleRatingFilterRemove = useCallback(
-    () => setRatingFilter([0, 5]),
-    [],
-  );
-  const handleSentimentFilterRemove = useCallback(
-    () => setSentimentFilter([]),
-    [],
-  );
-  const handleQueryValueRemove = useCallback(() => setQueryValue(""), []);
-
-  const handleFiltersClearAll = useCallback(() => {
-    handleRatingFilterRemove();
-    handleSentimentFilterRemove();
-    handleQueryValueRemove();
-  }, [
-    handleRatingFilterRemove,
-    handleSentimentFilterRemove,
-    handleQueryValueRemove,
-  ]);
-
-  const handleReviewClick = useCallback((review) => {
-    setSelectedReview(review);
-  }, []);
-
-  const handleCloseModal = useCallback(() => {
-    setSelectedReview(null);
-    setReplyText("");
-    setReplyStatus(null);
-  }, []);
-
-  const handleReplySubmit = useCallback(() => {
-    if (selectedReview && replyText.trim()) {
-      fetcher.submit(
-        { reviewId: selectedReview.id, reply: replyText },
-        {
-          method: "post",
-          action: "/api/admin-reply",
-          encType: "application/json",
-        },
-      );
-    }
-  }, [selectedReview, replyText, fetcher]);
-
-  useEffect(() => {
-    if (fetcher.type === "done") {
-      if (fetcher.data.error) {
-        setReplyStatus({ type: "error", content: fetcher.data.error });
-      } else {
-        setReplyStatus({
-          type: "success",
-          content: "Reply submitted successfully",
-        });
-        setReplyText("");
-        setSelectedReview((prev) => ({
-          ...prev,
-          adminReplies: [
-            ...prev.adminReplies,
-            {
-              id: fetcher.data.id,
-              reply: fetcher.data.reply,
-              createdAt: fetcher.data.createdAt,
-            },
-          ],
-        }));
-      }
-    }
-  }, [fetcher.type, fetcher.data]);
+  }, [product, initialReviews]);
 
   const handleBulkAction = (actionType) => {
     fetcher.submit(
@@ -316,28 +171,78 @@ export default function ProductReviews() {
     );
   };
 
+  const resourceName = {
+    singular: "review",
+    plural: "reviews",
+  };
+
+  const [itemStrings] = useState(["All", "Approved", "Pending"]);
+  const [selected, setSelected] = useState(0);
+
+  const handleTabChange = useCallback((selectedTabIndex) => {
+    setSelected(selectedTabIndex);
+    if (selectedTabIndex === 0) {
+      setStatusFilter([]);
+    } else if (selectedTabIndex === 1) {
+      setStatusFilter(["approved"]);
+    } else if (selectedTabIndex === 2) {
+      setStatusFilter(["pending"]);
+    }
+  }, []);
+
   const sortOptions = [
-    {
-      label: "Date",
-      value: "createdAt desc",
-      directionLabel: "Newest first",
-    },
-    {
-      label: "Date",
-      value: "createdAt asc",
-      directionLabel: "Oldest first",
-    },
-    {
-      label: "Rating",
-      value: "rating desc",
-      directionLabel: "Descending",
-    },
-    {
-      label: "Rating",
-      value: "rating asc",
-      directionLabel: "Ascending",
-    },
+    { label: "Date", value: "createdAt asc", directionLabel: "Oldest" },
+    { label: "Date", value: "createdAt desc", directionLabel: "Newest" },
+    { label: "Rating", value: "rating asc", directionLabel: "Lowest" },
+    { label: "Rating", value: "rating desc", directionLabel: "Highest" },
   ];
+
+  const [ratingFilter, setRatingFilter] = useState([0, 5]);
+  const [statusFilter, setStatusFilter] = useState([]);
+  const [sentimentFilter, setSentimentFilter] = useState([]);
+
+  const handleRatingFilterChange = useCallback(
+    (value) => setRatingFilter(value),
+    [],
+  );
+
+  const handleStatusFilterChange = useCallback(
+    (value) => setStatusFilter(value),
+    [],
+  );
+
+  const handleSentimentFilterChange = useCallback(
+    (value) => setSentimentFilter(value),
+    [],
+  );
+
+  const handleFiltersQueryChange = useCallback(
+    (value) => setQueryValue(value),
+    [],
+  );
+
+  const handleRatingFilterRemove = useCallback(
+    () => setRatingFilter([0, 5]),
+    [],
+  );
+  const handleStatusFilterRemove = useCallback(() => setStatusFilter([]), []);
+  const handleSentimentFilterRemove = useCallback(
+    () => setSentimentFilter([]),
+    [],
+  );
+  const handleQueryValueRemove = useCallback(() => setQueryValue(""), []);
+
+  const handleFiltersClearAll = useCallback(() => {
+    handleRatingFilterRemove();
+    handleStatusFilterRemove();
+    handleSentimentFilterRemove();
+    handleQueryValueRemove();
+  }, [
+    handleRatingFilterRemove,
+    handleStatusFilterRemove,
+    handleSentimentFilterRemove,
+    handleQueryValueRemove,
+  ]);
 
   const filters = [
     {
@@ -357,6 +262,24 @@ export default function ProductReviews() {
       shortcut: true,
     },
     {
+      key: "status",
+      label: "Status",
+      filter: (
+        <ChoiceList
+          title="Status"
+          titleHidden
+          choices={[
+            { label: "Approved", value: "approved" },
+            { label: "Pending", value: "pending" },
+          ]}
+          selected={statusFilter}
+          onChange={handleStatusFilterChange}
+          allowMultiple
+        />
+      ),
+      shortcut: true,
+    },
+    {
       key: "sentiment",
       label: "Sentiment",
       filter: (
@@ -364,8 +287,9 @@ export default function ProductReviews() {
           title="Sentiment"
           titleHidden
           choices={[
-            { label: "Positive", value: "POSITIVE" },
-            { label: "Negative", value: "NEGATIVE" },
+            { label: "Positive", value: "positive" },
+            { label: "Negative", value: "negative" },
+            { label: "Neutral", value: "neutral" },
           ]}
           selected={sentimentFilter}
           onChange={handleSentimentFilterChange}
@@ -384,6 +308,13 @@ export default function ProductReviews() {
       onRemove: handleRatingFilterRemove,
     });
   }
+  if (statusFilter.length > 0) {
+    appliedFilters.push({
+      key: "status",
+      label: `Status: ${statusFilter.join(", ")}`,
+      onRemove: handleStatusFilterRemove,
+    });
+  }
   if (sentimentFilter.length > 0) {
     appliedFilters.push({
       key: "sentiment",
@@ -392,55 +323,48 @@ export default function ProductReviews() {
     });
   }
 
-  const filteredReviews = initialReviews.filter((review) => {
+  const filteredReviews = reviews.filter((review) => {
     const matchesQuery = review.comment
       .toLowerCase()
       .includes(queryValue.toLowerCase());
     const matchesRating =
       review.rating >= ratingFilter[0] && review.rating <= ratingFilter[1];
+    const matchesStatus =
+      statusFilter.length === 0 ||
+      statusFilter.includes(review.approved ? "approved" : "pending");
     const matchesSentiment =
       sentimentFilter.length === 0 ||
-      sentimentFilter.includes(review.sentiment);
-    return matchesQuery && matchesRating && matchesSentiment;
+      sentimentFilter.includes(review.sentiment.toLowerCase());
+    return matchesQuery && matchesRating && matchesStatus && matchesSentiment;
   });
 
-  const rowMarkup = filteredReviews.map(
-    (
-      {
-        id,
-        comment,
-        createdAt,
-        rating,
-        sentiment,
-        approved,
-        imageUrl,
-        firstName,
-        lastName,
-      },
-      index,
-    ) => (
+  const sortedReviews = [...filteredReviews].sort((a, b) => {
+    const [sortKey, sortDirection] = sortSelected[0].split(" ");
+    if (sortKey === "createdAt") {
+      return sortDirection === "asc"
+        ? new Date(a.createdAt) - new Date(b.createdAt)
+        : new Date(b.createdAt) - new Date(a.createdAt);
+    } else if (sortKey === "rating") {
+      return sortDirection === "asc"
+        ? a.rating - b.rating
+        : b.rating - a.rating;
+    }
+    return 0;
+  });
+
+  const paginatedReviews = sortedReviews.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
+  const rowMarkup = paginatedReviews.map(
+    ({ id, comment, createdAt, rating, sentiment, approved }, index) => (
       <IndexTable.Row
         id={id}
         key={id}
         selected={selectedResources.includes(id)}
         position={index}
-        onClick={() =>
-          handleReviewClick({
-            id,
-            comment,
-            createdAt,
-            rating,
-            sentiment,
-            approved,
-            imageUrl,
-            firstName,
-            lastName,
-          })
-        }
       >
-        <IndexTable.Cell>
-          <Thumbnail source={imageUrl || ImageIcon} alt="Review" size="small" />
-        </IndexTable.Cell>
         <IndexTable.Cell>
           <Text variant="bodyMd" fontWeight="bold" as="span">
             {truncateText(comment, 50)}
@@ -450,7 +374,9 @@ export default function ProductReviews() {
           {new Date(createdAt).toLocaleDateString()}
         </IndexTable.Cell>
         <IndexTable.Cell>
-          <RatingStars value={rating} />
+          <Text as="span" alignment="center" numeric>
+            {rating}
+          </Text>
         </IndexTable.Cell>
         <IndexTable.Cell>
           <Badge
@@ -462,7 +388,7 @@ export default function ProductReviews() {
                   : "warning"
             }
           >
-            {capitalizeFirstLetter(sentiment.toLowerCase())}
+            {capitalizeFirstLetter(sentiment)}
           </Badge>
         </IndexTable.Cell>
         <IndexTable.Cell>
@@ -503,151 +429,69 @@ export default function ProductReviews() {
     },
   ];
 
-  if (loading) {
-    return <SkeletonLoader />;
-  }
-
   return (
     <Page
-      title={product.title}
+      title={`Reviews for ${product.title}`}
       breadcrumbs={[{ content: "Products", url: "/app/manage-reviews" }]}
-      primaryAction={{
-        content: "Back to Products",
-        onAction: () => navigate("/app/manage-reviews"),
-      }}
     >
-      <LegacyCard>
-        <IndexFilters
-          sortOptions={sortOptions}
-          sortSelected={sortSelected}
-          queryValue={queryValue}
-          queryPlaceholder="Search reviews"
-          onQueryChange={handleFiltersQueryChange}
-          onQueryClear={() => setQueryValue("")}
-          onSort={handleSort}
-          cancelAction={{
-            onAction: handleFiltersClearAll,
-            disabled: false,
-            loading: false,
-          }}
-          tabs={itemStrings.map((item, index) => ({
-            content: item,
-            index,
-            onAction: () => handleTabChange(index),
-            id: `${item}-${index}`,
-          }))}
-          selected={selected}
-          onSelect={handleTabChange}
-          filters={filters}
-          appliedFilters={appliedFilters}
-          onClearAll={handleFiltersClearAll}
-          mode={mode}
-          setMode={setMode}
-        />
-        <IndexTable
-          condensed={useBreakpoints.smDown}
-          resourceName={{ singular: "review", plural: "reviews" }}
-          itemCount={filteredReviews.length}
-          selectedItemsCount={
-            allResourcesSelected ? "All" : selectedResources.length
-          }
-          onSelectionChange={handleSelectionChange}
-          headings={[
-            { title: "Image" },
-            { title: "Comment" },
-            { title: "Date" },
-            { title: "Rating" },
-            { title: "Sentiment" },
-            { title: "Status" },
-          ]}
-          bulkActions={bulkActions}
-        >
-          {rowMarkup}
-        </IndexTable>
-        {fetcher.state === "submitting" && <Spinner />}
-      </LegacyCard>
-      {selectedReview && (
-        <Modal
-          open={Boolean(selectedReview)}
-          onClose={handleCloseModal}
-          title="Review Details"
-        >
-          <Modal.Section>
-            <TextContainer>
-              <p>
-                <strong>Customer:</strong> {selectedReview.firstName}{" "}
-                {selectedReview.lastName}
-              </p>
-              <p>
-                <strong>Comment:</strong> {selectedReview.comment}
-              </p>
-              <p>
-                <strong>Date:</strong>{" "}
-                {new Date(selectedReview.createdAt).toLocaleString()}
-              </p>
-              <div>
-                <strong>Rating:</strong>{" "}
-                <RatingStars value={selectedReview.rating} />
-              </div>
-              <p>
-                <strong>Sentiment:</strong>{" "}
-                {capitalizeFirstLetter(selectedReview.sentiment.toLowerCase())}
-              </p>
-              <p>
-                <strong>Status:</strong>{" "}
-                {selectedReview.approved ? "Approved" : "Pending"}
-              </p>
-              {selectedReview.imageUrl && (
-                <img
-                  src={selectedReview.imageUrl}
-                  alt="Review"
-                  style={{
-                    maxWidth: "100%",
-                    height: "auto",
-                    marginTop: "1rem",
-                  }}
-                />
-              )}
-              {selectedReview.videoUrl && (
-                <video
-                  src={selectedReview.videoUrl}
-                  controls
-                  style={{
-                    maxWidth: "100%",
-                    height: "auto",
-                    marginTop: "1rem",
-                  }}
-                />
-              )}
-              <h3>Admin Replies</h3>
-              {selectedReview.adminReplies.map((reply) => (
-                <div key={reply.id}>
-                  <p>{reply.reply}</p>
-                  <p>
-                    <small>{new Date(reply.createdAt).toLocaleString()}</small>
-                  </p>
-                </div>
-              ))}
-              {replyStatus && (
-                <Banner
-                  tone={replyStatus.type === "success" ? "success" : "critical"}
-                >
-                  <p>{replyStatus.content}</p>
-                </Banner>
-              )}
-              <TextField
-                label="Reply to review"
-                value={replyText}
-                onChange={(value) => setReplyText(value)}
-                multiline={4}
-              />
-              <Button onClick={handleReplySubmit} primary>
-                Submit Reply
-              </Button>
-            </TextContainer>
-          </Modal.Section>
-        </Modal>
-      )}
+      <Layout>
+        <Layout.Section>
+          <LegacyCard>
+            <IndexFilters
+              sortOptions={sortOptions}
+              sortSelected={sortSelected}
+              queryValue={queryValue}
+              queryPlaceholder="Search reviews"
+              onQueryChange={handleFiltersQueryChange}
+              onQueryClear={() => setQueryValue("")}
+              onSort={setSortSelected}
+              cancelAction={{
+                onAction: () => {},
+                disabled: false,
+                loading: false,
+              }}
+              tabs={itemStrings.map((item, index) => ({
+                content: item,
+                index,
+                onAction: () => handleTabChange(index),
+                id: `${item}-${index}`,
+              }))}
+              selected={selected}
+              onSelect={handleTabChange}
+              filters={filters}
+              appliedFilters={appliedFilters}
+              onClearAll={handleFiltersClearAll}
+              mode={mode}
+              setMode={setMode}
+            />
+            <IndexTable
+              condensed={useBreakpoints().smDown}
+              resourceName={resourceName}
+              itemCount={sortedReviews.length}
+              selectedItemsCount={
+                allResourcesSelected ? "All" : selectedResources.length
+              }
+              onSelectionChange={handleSelectionChange}
+              headings={[
+                { title: "Comment" },
+                { title: "Date" },
+                { title: "Rating" },
+                { title: "Sentiment" },
+                { title: "Status" },
+              ]}
+              bulkActions={bulkActions}
+              pagination={{
+                hasNext: currentPage * itemsPerPage < sortedReviews.length,
+                onNext: () => setCurrentPage((prev) => prev + 1),
+                hasPrevious: currentPage > 1,
+                onPrevious: () => setCurrentPage((prev) => prev - 1),
+              }}
+            >
+              {rowMarkup}
+            </IndexTable>
+          </LegacyCard>
+        </Layout.Section>
+      </Layout>
     </Page>
   );
 }
