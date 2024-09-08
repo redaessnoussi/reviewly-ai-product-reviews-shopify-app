@@ -25,6 +25,10 @@ import {
   Layout,
   SkeletonBodyText,
   SkeletonDisplayText,
+  Thumbnail,
+  Modal,
+  TextField,
+  BlockStack,
 } from "@shopify/polaris";
 import capitalizeFirstLetter from "../utils/capitalizeFirstLetter";
 import { useCallback, useEffect, useState } from "react";
@@ -32,6 +36,7 @@ import { truncateText } from "../utils/truncateText";
 import { isFeatureEnabled } from "../utils/isFeatureEnabled";
 import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
 import RatingStars from "../components/Home/RatingStars";
+import { ImageIcon } from "@shopify/polaris-icons";
 
 const PRODUCT_QUERY = `
   query getProduct($id: ID!) {
@@ -141,6 +146,10 @@ export default function ProductReviews() {
   const [sortSelected, setSortSelected] = useState(["createdAt desc"]);
   const [currentPage, setCurrentPage] = useState(1);
   const [actionMessage, setActionMessage] = useState(null);
+  const [selectedReview, setSelectedReview] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [itemStrings] = useState(["All", "Approved", "Pending"]);
+  const [selected, setSelected] = useState(0);
   const navigate = useNavigate();
   const fetcher = useFetcher();
   const itemsPerPage = 10; // Adjust as needed
@@ -159,16 +168,46 @@ export default function ProductReviews() {
 
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data) {
-      // Refresh the reviews after a successful action
-      setReviews((prevReviews) =>
-        prevReviews.map((review) => {
-          const updatedReview = fetcher.data.updatedReviews.find(
-            (r) => r.id === review.id,
-          );
-          return updatedReview ? { ...review, ...updatedReview } : review;
-        }),
-      );
-      setActionMessage({ content: fetcher.data.message, type: "success" });
+      // console.log("Fetcher data:", fetcher.data);
+
+      if (fetcher.data.id && fetcher.data.reply) {
+        // This is an admin reply
+        setReviews((prevReviews) =>
+          prevReviews.map((review) =>
+            review.id === fetcher.data.reviewId
+              ? {
+                  ...review,
+                  adminReplies: [...(review.adminReplies || []), fetcher.data],
+                }
+              : review,
+          ),
+        );
+        setActionMessage({
+          content: "Reply added successfully",
+          type: "success",
+        });
+        setSelectedReview(null);
+        setReplyText("");
+      } else if (fetcher.data.updatedReviews) {
+        // This is a bulk action response
+        setReviews((prevReviews) =>
+          prevReviews
+            .map((review) => {
+              const updatedReview = fetcher.data.updatedReviews.find(
+                (r) => r.id === review.id,
+              );
+              if (updatedReview) {
+                if (updatedReview.deleted) {
+                  return null;
+                }
+                return { ...review, ...updatedReview };
+              }
+              return review;
+            })
+            .filter(Boolean),
+        );
+        setActionMessage({ content: fetcher.data.message, type: "success" });
+      }
       setLoading(false);
     }
   }, [fetcher.state, fetcher.data]);
@@ -186,13 +225,32 @@ export default function ProductReviews() {
     );
   };
 
+  const handleReviewClick = (review) => {
+    setSelectedReview(review);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedReview(null);
+    setReplyText("");
+  };
+
+  const handleReplySubmit = () => {
+    if (!replyText.trim()) return;
+
+    fetcher.submit(
+      { reviewId: selectedReview.id, reply: replyText },
+      {
+        method: "post",
+        action: "/api/admin-reply",
+        encType: "application/json",
+      },
+    );
+  };
+
   const resourceName = {
     singular: "review",
     plural: "reviews",
   };
-
-  const [itemStrings] = useState(["All", "Approved", "Pending"]);
-  const [selected, setSelected] = useState(0);
 
   const handleTabChange = useCallback((selectedTabIndex) => {
     setSelected(selectedTabIndex);
@@ -372,48 +430,58 @@ export default function ProductReviews() {
     currentPage * itemsPerPage,
   );
 
-  const rowMarkup = paginatedReviews.map(
-    ({ id, comment, createdAt, rating, sentiment, approved }, index) => (
-      <IndexTable.Row
-        id={id}
-        key={id}
-        selected={selectedResources.includes(id)}
-        position={index}
-      >
-        <IndexTable.Cell>
-          <Text variant="bodyMd" fontWeight="bold" as="span">
-            {truncateText(comment, 50)}
-          </Text>
-        </IndexTable.Cell>
-        <IndexTable.Cell>
-          {new Date(createdAt).toLocaleDateString()}
-        </IndexTable.Cell>
-        <IndexTable.Cell>
-          <RatingStars value={rating} />
-        </IndexTable.Cell>
-        <IndexTable.Cell>
-          <Badge
-            tone={
-              sentiment === "POSITIVE"
-                ? "success"
-                : sentiment === "NEGATIVE"
-                  ? "critical"
-                  : "warning"
-            }
-          >
-            {capitalizeFirstLetter(sentiment)}
-          </Badge>
-        </IndexTable.Cell>
-        <IndexTable.Cell>
-          {approved ? (
-            <Badge tone="success">Approved</Badge>
-          ) : (
-            <Badge tone="attention">Pending</Badge>
-          )}
-        </IndexTable.Cell>
-      </IndexTable.Row>
-    ),
-  );
+  const rowMarkup = paginatedReviews.map((review, index) => (
+    <IndexTable.Row
+      id={review.id}
+      key={review.id}
+      selected={selectedResources.includes(review.id)}
+      onClick={() => handleReviewClick(review)}
+      position={index}
+    >
+      <IndexTable.Cell>
+        {review.imageUrl ? (
+          <Thumbnail
+            source={review.imageUrl}
+            alt={`Review image for ${review.firstName}`}
+            size="small"
+          />
+        ) : (
+          <Thumbnail source={ImageIcon} size="small" alt="No Image Found" />
+        )}
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        <Text variant="bodyMd" fontWeight="bold" as="span">
+          {truncateText(review.comment, 50)}
+        </Text>
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        {new Date(review.createdAt).toLocaleDateString()}
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        <RatingStars value={review.rating} />
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        <Badge
+          tone={
+            review.sentiment === "POSITIVE"
+              ? "success"
+              : review.sentiment === "NEGATIVE"
+                ? "critical"
+                : "warning"
+          }
+        >
+          {capitalizeFirstLetter(review.sentiment)}
+        </Badge>
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        {review.approved ? (
+          <Badge tone="success">Approved</Badge>
+        ) : (
+          <Badge tone="attention">Pending</Badge>
+        )}
+      </IndexTable.Cell>
+    </IndexTable.Row>
+  ));
 
   const bulkActions = [
     {
@@ -504,6 +572,7 @@ export default function ProductReviews() {
               }
               onSelectionChange={handleSelectionChange}
               headings={[
+                { title: "Image" },
                 { title: "Comment" },
                 { title: "Date" },
                 { title: "Rating" },
@@ -523,6 +592,82 @@ export default function ProductReviews() {
           </LegacyCard>
         </Layout.Section>
       </Layout>
+      {selectedReview && (
+        <Modal
+          open={true}
+          onClose={handleCloseModal}
+          title={`Review Details`}
+          primaryAction={{
+            content: "Submit Reply",
+            onAction: handleReplySubmit,
+          }}
+          secondaryActions={[
+            {
+              content: "Close",
+              onAction: handleCloseModal,
+            },
+          ]}
+        >
+          <Modal.Section>
+            <BlockStack gap="400">
+              <Text as="p">
+                <Text as="span" fontWeight="bold">
+                  Customer:{" "}
+                </Text>
+                {selectedReview.firstName} {selectedReview.lastName}
+              </Text>
+              <Text as="p">
+                <Text as="span" fontWeight="bold">
+                  Date:{" "}
+                </Text>
+                {new Date(selectedReview.createdAt).toLocaleString()}
+              </Text>
+              <Text as="p">
+                <Text as="span" fontWeight="bold">
+                  Rating:{" "}
+                </Text>
+                <RatingStars value={selectedReview.rating} />
+              </Text>
+              <Text as="p">
+                <Text as="span" fontWeight="bold">
+                  Comment:{" "}
+                </Text>
+                {selectedReview.comment}
+              </Text>
+              {selectedReview.imageUrl && (
+                <img
+                  src={selectedReview.imageUrl}
+                  alt="Review"
+                  style={{ maxWidth: "100%", height: "auto" }}
+                />
+              )}
+              <BlockStack gap="300">
+                <Text as="h3" variant="headingMd">
+                  Admin Replies
+                </Text>
+                {selectedReview.adminReplies &&
+                selectedReview.adminReplies.length > 0 ? (
+                  <BlockStack gap="200">
+                    {selectedReview.adminReplies.map((reply, index) => (
+                      <Text as="p" key={index}>
+                        {reply.reply}
+                      </Text>
+                    ))}
+                  </BlockStack>
+                ) : (
+                  <Text as="p">No replies yet.</Text>
+                )}
+              </BlockStack>
+              <TextField
+                label="Your Reply"
+                value={replyText}
+                onChange={setReplyText}
+                multiline={4}
+              />
+            </BlockStack>
+          </Modal.Section>
+        </Modal>
+      )}
     </Page>
   );
 }
