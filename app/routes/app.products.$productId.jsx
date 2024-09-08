@@ -148,6 +148,7 @@ export default function ProductReviews() {
   const fetcher = useFetcher();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // Adjust as needed
+  const [actionMessage, setActionMessage] = useState(null);
 
   const isBulkActionsEnabled = isFeatureEnabled(plan.name, "Bulk Actions");
 
@@ -157,10 +158,24 @@ export default function ProductReviews() {
   const { mode, setMode } = useSetIndexFiltersMode();
 
   useEffect(() => {
-    setLoading(false);
-  }, [product, initialReviews]);
+    if (fetcher.state === "idle" && fetcher.data) {
+      // Refresh the reviews after a successful action
+      setReviews((prevReviews) =>
+        prevReviews.map((review) => {
+          const updatedReview = fetcher.data.updatedReviews.find(
+            (r) => r.id === review.id,
+          );
+          return updatedReview ? { ...review, ...updatedReview } : review;
+        }),
+      );
+      setActionMessage({ content: fetcher.data.message, type: "success" });
+      setLoading(false);
+    }
+  }, [fetcher.state, fetcher.data]);
 
   const handleBulkAction = (actionType) => {
+    setLoading(true);
+    setActionMessage(null);
     fetcher.submit(
       { actionType, reviewIds: selectedResources },
       {
@@ -435,6 +450,15 @@ export default function ProductReviews() {
       breadcrumbs={[{ content: "Products", url: "/app/manage-reviews" }]}
     >
       <Layout>
+        {actionMessage && (
+          <Layout.Section>
+            <Banner
+              title={actionMessage.content}
+              tone={actionMessage.type}
+              onDismiss={() => setActionMessage(null)}
+            />
+          </Layout.Section>
+        )}
         <Layout.Section>
           <LegacyCard>
             <IndexFilters
