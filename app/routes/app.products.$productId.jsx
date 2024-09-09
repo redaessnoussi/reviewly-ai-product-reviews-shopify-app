@@ -29,6 +29,7 @@ import {
   Modal,
   TextField,
   BlockStack,
+  InlineStack,
 } from "@shopify/polaris";
 import capitalizeFirstLetter from "../utils/capitalizeFirstLetter";
 import { useCallback, useEffect, useState } from "react";
@@ -36,7 +37,7 @@ import { truncateText } from "../utils/truncateText";
 import { isFeatureEnabled } from "../utils/isFeatureEnabled";
 import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
 import RatingStars from "../components/Home/RatingStars";
-import { ImageIcon } from "@shopify/polaris-icons";
+import { DeleteIcon, ImageIcon } from "@shopify/polaris-icons";
 
 const PRODUCT_QUERY = `
   query getProduct($id: ID!) {
@@ -148,6 +149,7 @@ export default function ProductReviews() {
   const [actionMessage, setActionMessage] = useState(null);
   const [selectedReview, setSelectedReview] = useState(null);
   const [replyText, setReplyText] = useState("");
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [itemStrings] = useState(["All", "Approved", "Pending"]);
   const [selected, setSelected] = useState(0);
   const navigate = useNavigate();
@@ -168,10 +170,28 @@ export default function ProductReviews() {
 
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data) {
-      // console.log("Fetcher data:", fetcher.data);
+      console.log("Fetcher data:", fetcher.data);
 
-      if (fetcher.data.id && fetcher.data.reply) {
-        // This is an admin reply
+      if (fetcher.data.aiResponseDeleted) {
+        // Handle AI response deletion
+        setReviews((prevReviews) =>
+          prevReviews.map((review) =>
+            review.id === fetcher.data.reviewId
+              ? { ...review, AiResponse: null }
+              : review,
+          ),
+        );
+        setSelectedReview((prev) =>
+          prev && prev.id === fetcher.data.reviewId
+            ? { ...prev, AiResponse: null }
+            : prev,
+        );
+        setActionMessage({
+          content: "AI response deleted successfully",
+          type: "success",
+        });
+      } else if (fetcher.data.id && fetcher.data.reply) {
+        // Handle new admin reply
         setReviews((prevReviews) =>
           prevReviews.map((review) =>
             review.id === fetcher.data.reviewId
@@ -189,7 +209,7 @@ export default function ProductReviews() {
         setSelectedReview(null);
         setReplyText("");
       } else if (fetcher.data.updatedReviews) {
-        // This is a bulk action response
+        // Handle bulk action response
         setReviews((prevReviews) =>
           prevReviews
             .map((review) => {
@@ -245,6 +265,18 @@ export default function ProductReviews() {
         encType: "application/json",
       },
     );
+  };
+
+  const handleDeleteAiReply = () => {
+    fetcher.submit(
+      { reviewId: selectedReview.id },
+      {
+        method: "post",
+        action: "/api/delete-ai-reply",
+        encType: "application/json",
+      },
+    );
+    setShowDeleteConfirmation(false);
   };
 
   const resourceName = {
@@ -641,6 +673,25 @@ export default function ProductReviews() {
                   style={{ maxWidth: "100%", height: "auto" }}
                 />
               )}
+
+              {selectedReview.AiResponse && (
+                <BlockStack gap="300">
+                  <InlineStack align="space-between">
+                    <Text as="h3" variant="headingMd">
+                      AI Response
+                    </Text>
+                    <Button
+                      icon={DeleteIcon}
+                      onClick={() => setShowDeleteConfirmation(true)}
+                      tone="critical"
+                    >
+                      Delete AI Response
+                    </Button>
+                  </InlineStack>
+                  <Text as="p">{selectedReview.AiResponse}</Text>
+                </BlockStack>
+              )}
+
               <BlockStack gap="300">
                 <Text as="h3" variant="headingMd">
                   Admin Replies
@@ -655,7 +706,7 @@ export default function ProductReviews() {
                     ))}
                   </BlockStack>
                 ) : (
-                  <Text as="p">No replies yet.</Text>
+                  <Text as="p">No admin replies yet.</Text>
                 )}
               </BlockStack>
               <TextField
@@ -665,6 +716,31 @@ export default function ProductReviews() {
                 multiline={4}
               />
             </BlockStack>
+          </Modal.Section>
+        </Modal>
+      )}
+      {showDeleteConfirmation && (
+        <Modal
+          open={true}
+          onClose={() => setShowDeleteConfirmation(false)}
+          title="Delete AI Response"
+          primaryAction={{
+            content: "Delete",
+            onAction: handleDeleteAiReply,
+            destructive: true,
+          }}
+          secondaryActions={[
+            {
+              content: "Cancel",
+              onAction: () => setShowDeleteConfirmation(false),
+            },
+          ]}
+        >
+          <Modal.Section>
+            <Text as="p">
+              Are you sure you want to delete the AI response? This action
+              cannot be undone.
+            </Text>
           </Modal.Section>
         </Modal>
       )}
