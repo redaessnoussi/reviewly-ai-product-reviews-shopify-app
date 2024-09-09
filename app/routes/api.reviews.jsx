@@ -11,28 +11,6 @@ import { handleSentimentAnalysis } from "../utils/handleSentimentAnalysis";
 import { handleAIResponse } from "../utils/handleAIResponse";
 import { handleReviewModeration } from "../utils/handleReviewModeration";
 
-function nestReplies(replies) {
-  const replyMap = new Map();
-  const rootReplies = [];
-
-  replies.forEach((reply) => {
-    replyMap.set(reply.id, { ...reply, children: [] });
-  });
-
-  replyMap.forEach((reply) => {
-    if (reply.parentId) {
-      const parent = replyMap.get(reply.parentId);
-      if (parent) {
-        parent.children.push(reply);
-      }
-    } else {
-      rootReplies.push(reply);
-    }
-  });
-
-  return rootReplies;
-}
-
 export const loader = async ({ request }) => {
   const url = new URL(request.url);
   const productId = url.searchParams.get("productId");
@@ -40,26 +18,20 @@ export const loader = async ({ request }) => {
 
   if (!productId || !shopName) {
     return json(
-      { error: "Product ID and Shop ID are required" },
+      { error: "Product ID and Shop ID is required" },
       { status: 400 },
     );
   }
 
   const reviews = await prisma.review.findMany({
     where: { productId, shopId: shopName, approved: true },
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: "desc" }, // Order by createdAt in descending order
     include: {
-      replies: true, // Include all replies
+      adminReplies: true, // Include admin replies in the fetched reviews
     },
   });
 
-  // Nest the replies
-  const reviewsWithNestedReplies = reviews.map((review) => ({
-    ...review,
-    replies: nestReplies(review.replies),
-  }));
-
-  return json(reviewsWithNestedReplies);
+  return json(reviews);
 };
 
 export const action = async ({ request }) => {
@@ -95,7 +67,7 @@ export const action = async ({ request }) => {
       data: {
         productId,
         title: productTitle || "Default Product Title",
-        shopId: shopName,
+        shopId: shopName, // Assuming shopName is used as shopId
       },
     });
   }
@@ -135,6 +107,13 @@ export const action = async ({ request }) => {
     subscriptionPlan,
   );
 
+  // Handle AI response
+  const aiResponse = await handleAIResponse(
+    comment,
+    settings,
+    subscriptionPlan,
+  );
+
   // Handle review moderation
   const approved = handleReviewModeration(
     settings,
@@ -146,35 +125,19 @@ export const action = async ({ request }) => {
     const review = await prisma.review.create({
       data: {
         productId,
-        shopId: shopName,
+        shopId: shopName, // Ensure shopId is set
         comment,
         createdAt: new Date(),
         firstName,
         lastName,
         rating: parseFloat(rating),
         sentiment,
+        AiResponse: aiResponse,
         imageUrl,
         videoUrl,
         approved,
       },
     });
-
-    // Handle AI response
-    const aiResponse = await handleAIResponse(
-      comment,
-      settings,
-      subscriptionPlan,
-    );
-
-    if (aiResponse) {
-      await prisma.reply.create({
-        data: {
-          reviewId: review.id,
-          content: aiResponse,
-          type: "AI",
-        },
-      });
-    }
 
     // Send email notification to admin
     const isEmailNotificationEnabled = isFeatureEnabled(
@@ -184,7 +147,7 @@ export const action = async ({ request }) => {
 
     if (isEmailNotificationEnabled && settings.notificationEmail) {
       await sendEmail({
-        to: settings.notificationEmail,
+        to: settings.notificationEmail, // Replace with the admin's email address
         subject: "New Product Review Submitted",
         productId: productId,
         firstName: firstName,
@@ -194,13 +157,7 @@ export const action = async ({ request }) => {
       });
     }
 
-    // Fetch the created review with its replies
-    const reviewWithReplies = await prisma.review.findUnique({
-      where: { id: review.id },
-      include: { replies: true },
-    });
-
-    return json(reviewWithReplies);
+    return json(review);
   } catch (error) {
     console.error("Error processing review:", error);
     return json(

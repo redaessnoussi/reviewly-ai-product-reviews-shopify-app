@@ -35,41 +35,23 @@ model Shop {
 }
 
 model Review {
-  id        Int      @id @default(autoincrement())
-  productId String
-  product   Product  @relation(fields: [productId], references: [productId])
-  shopId    String
-  shop      Shop     @relation(fields: [shopId], references: [id])
-  comment   String
-  replies   Reply[] // New field for nested replies
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  firstName String
-  lastName  String?
-  rating    Float
-  sentiment String?
-  imageUrl  String?
-  videoUrl  String?
-  approved  Boolean  @default(false)
-}
-
-model Reply {
-  id        Int       @id @default(autoincrement())
-  reviewId  Int
-  review    Review    @relation(fields: [reviewId], references: [id])
-  content   String
-  type      ReplyType
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  parentId  Int? // For nested replies
-  parent    Reply?    @relation("NestedReplies", fields: [parentId], references: [id])
-  children  Reply[]   @relation("NestedReplies")
-}
-
-enum ReplyType {
-  AI
-  ADMIN
-  CUSTOMER
+  id           Int          @id @default(autoincrement())
+  productId    String
+  product      Product      @relation(fields: [productId], references: [productId])
+  shopId       String
+  shop         Shop         @relation(fields: [shopId], references: [id])
+  comment      String
+  adminReplies AdminReply[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  firstName    String
+  lastName     String?
+  rating       Float
+  sentiment    String?
+  AiResponse   String?
+  imageUrl     String?
+  videoUrl     String?
+  approved     Boolean      @default(false)
 }
 
 model Product {
@@ -79,6 +61,15 @@ model Product {
   productId String   @unique // Ensure productId is unique
   title     String
   reviews   Review[]
+}
+
+model AdminReply {
+  id        Int      @id @default(autoincrement())
+  reviewId  Int
+  review    Review   @relation(fields: [reviewId], references: [id])
+  reply     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Settings {

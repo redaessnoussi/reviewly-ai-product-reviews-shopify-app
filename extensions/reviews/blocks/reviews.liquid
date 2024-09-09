@@ -39,6 +39,10 @@
           <input type="text" id="firstName" name="firstName" required>
           <label for="lastName">Last Name:</label>
           <input type="text" id="lastName" name="lastName">
+          {% comment %}
+            <label for="rating">Rating:</label>
+            <input type="number" id="rating" name="rating" step="1" min="1" max="5" required>
+          {% endcomment %}
           <label for="image">Image:</label>
           <input type="file" id="image" name="image" accept="image/*">
           <label for="video">Video:</label>
@@ -52,6 +56,7 @@
   </div>
 </div>
 
+{% comment %} <script src="{{ 'isFeatureEnabled.js' | asset_url }}" defer></script> {% endcomment %}
 <script
   type="module"
 >
@@ -89,7 +94,9 @@
       starRating.setAttribute('data-rating', ratingInput.value || '0');
     });
 
-    const apiEndpoint = 'https://accounting-chief-donations-exception.trycloudflare.com';
+    console.log("product title : ", productTitle)    
+
+    const apiEndpoint = 'https://studies-specials-parish-curious.trycloudflare.com';
 
     // Fetch settings
     const settingsResponse = await fetch(`${apiEndpoint}/api/settings?shopName=${shopName}`);
@@ -98,6 +105,8 @@
     //Fetch subscription plan
     const subscriptionPlanResponse = await fetch(`${apiEndpoint}/api/subscription-plan?shopName=${shopName}`);
     const subscriptionPlan = await subscriptionPlanResponse.json();
+
+    console.log("liquid subscriptionPlan", subscriptionPlan)
 
     const enableSentimentAnalysis = settings.enableSentimentAnalysis;
     const enableAutomatedResponses = settings.enableAutomatedResponses;
@@ -115,20 +124,21 @@
         const globalRatings = document.getElementById('global-ratings');
         globalRatings.innerHTML = `
           <p>Total Reviews: ${totalReviews}</p>
-          <button id="show-all-reviews" class="filter-button">Show All Reviews</button>
-          <div class="ratings-distribution">
-            ${ratingsDistribution.map((rating, index) => `
-              <div class="rating-row" data-rating="${5 - index}">
-                <span class="star-count">${5 - index} stars:</span>
-                <div class="progress-bar-container">
-                  <div class="progress-bar" data-percentage="${rating.percentage}"></div>
-                </div>
-                <span class="percentage">${rating.count} (${rating.percentage}%)</span>
-              </div>
-            `).join('')}
+      <button id="show-all-reviews" class="filter-button">Show All Reviews</button>
+      <div class="ratings-distribution">
+        ${ratingsDistribution.map((rating, index) => `
+          <div class="rating-row" data-rating="${5 - index}">
+            <span class="star-count">${5 - index} stars:</span>
+            <div class="progress-bar-container">
+              <div class="progress-bar" data-percentage="${rating.percentage}"></div>
+            </div>
+            <span class="percentage">${rating.count} (${rating.percentage}%)</span>
           </div>
+        `).join('')}
+      </div>
         `;
     
+        // Animate progress bars
         setTimeout(() => {
           document.querySelectorAll('.progress-bar').forEach(bar => {
             const percentage = bar.getAttribute('data-percentage');
@@ -136,121 +146,102 @@
           });
         }, 100);
 
-        document.querySelectorAll('.rating-row').forEach(row => {
-          row.addEventListener('click', () => {
-            const rating = row.getAttribute('data-rating');
-            filterReviews(rating);
-          });
-        });
+        // Add click event listeners to rating rows
+    document.querySelectorAll('.rating-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const rating = row.getAttribute('data-rating');
+        filterReviews(rating);
+      });
+    });
 
-        document.getElementById('show-all-reviews').addEventListener('click', () => {
-          filterReviews('all');
-        });
+    // Add event listener for "Show All Reviews" button
+    document.getElementById('show-all-reviews').addEventListener('click', () => {
+      filterReviews('all');
+    });
       }
     };
 
+    {% comment %} await fetchRatings(); {% endcomment %}
+
     const fetchReviews = async () => {
       const response = await fetch(`${apiEndpoint}/api/reviews?productId=${productId}&shopName=${shopName}`);
-      allReviews = await response.json();
-      displayReviews(allReviews);
+      allReviews = await response.json(); // Store all reviews
+      displayReviews(allReviews); // Display all reviews initially
     };
 
     const displayReviews = (reviews) => {
       const reviewsList = document.getElementById('reviews-list');
-      reviewsList.innerHTML = '';
+      reviewsList.innerHTML = ''; // Clear the list before appending new reviews
     
       if (reviews.length === 0) {
-        reviewsList.innerHTML = '<p>No reviews found.</p>';
+        const noReviewsMessage = document.createElement('p');
+        noReviewsMessage.innerHTML = 'No reviews found.';
+        reviewsList.appendChild(noReviewsMessage);
       } else {
         reviews.forEach((review) => {
           const reviewElement = document.createElement('div');
           reviewElement.className = 'review-box';
-          reviewElement.innerHTML = createReviewHTML(review);
+          const reviewDate = new Date(review.createdAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
+    
+          // Create star rating HTML
+          const starRating = `
+            <div class="star-rating" data-rating="${review.rating}">
+              ${Array(5).fill().map((_, i) => `<span class="star" data-rating="${i + 1}">★</span>`).join('')}
+            </div>
+          `;
+    
+          reviewElement.innerHTML = `
+            <div class="review-header">
+              <div class="avatar-container">
+                <img src="https://via.placeholder.com/48" alt="Customer Avatar" class="avatar">
+              </div>
+              <div class="review-info">
+                <p class="reviewer-name">${review.firstName} ${review.lastName ? review.lastName : ''}</p>
+                ${starRating}
+                <p class="review-date"> <span class="reviewer-name">Reviewed on </span>${reviewDate}</p>
+              </div>
+            </div>
+            <div class="review-content">
+              ${review.imageUrl ? `<img src="${review.imageUrl}" alt="Review Image" class="review-image" />` : ''}
+              ${review.videoUrl ? `<video src="${review.videoUrl}" controls class="review-video"></video>` : ''}
+              <p class="review-comment">${review.comment}</p>
+              ${enableSentimentAnalysis && review.sentiment ? 
+        `<span class="sentiment-badge ${review.sentiment.toLowerCase()}">${capitalizeFirstLetter(review.sentiment)}</span>` 
+        : ''}
+      ${enableAutomatedResponses && review.AiResponse ? 
+        `<div class="ai-response">
+          <h4>AI Response:</h4>
+          <p>${review.AiResponse}</p>
+        </div>` 
+        : ''}            </div>
+            {% if customer.tags contains "admin" %}
+            <button class="reply-button" data-review-id="${review.id}">Reply to Customer</button>
+            {% endif %}
+            <div class="admin-replies" id="admin-replies-${review.id}">
+              ${review.adminReplies ? review.adminReplies.map(reply => `
+                <p class="review-date"> <span class="reviewer-name">Replied on </span>${new Date(reply.createdAt).toLocaleDateString('en-US')}</p>
+                <p class="admin-reply">${reply.reply}</p>`).join('') : ''}
+            </div>
+          `;
           reviewsList.appendChild(reviewElement);
         });
     
+        {% if customer.tags contains "admin" %}
         document.querySelectorAll('.reply-button').forEach(button => {
           button.addEventListener('click', () => {
             const reviewId = button.getAttribute('data-review-id');
-            const parentId = button.getAttribute('data-parent-id');
             const replyText = prompt('Enter your reply:');
             if (replyText) {
-              submitReply(reviewId, replyText, parentId);
+              submitAdminReply(reviewId, replyText);
             }
           });
         });
+        {% endif %}
       }
-    };
-
-    const createReviewHTML = (review) => {
-      const reviewDate = new Date(review.createdAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
-
-      const starRating = `
-        <div class="star-rating" data-rating="${review.rating}">
-          ${Array(5).fill().map((_, i) => `<span class="star" data-rating="${i + 1}">★</span>`).join('')}
-        </div>
-      `;
-
-      let repliesHTML = '';
-      if (review.replies && review.replies.length > 0) {
-        repliesHTML = `
-          <div class="replies">
-            ${createRepliesHTML(review.replies)}
-          </div>
-        `;
-      }
-
-      return `
-        <div class="review-header">
-          <div class="avatar-container">
-            <img src="https://via.placeholder.com/48" alt="Customer Avatar" class="avatar">
-          </div>
-          <div class="review-info">
-            <p class="reviewer-name">${review.firstName} ${review.lastName || ''}</p>
-            ${starRating}
-            <p class="review-date"><span class="reviewer-name">Reviewed on </span>${reviewDate}</p>
-          </div>
-        </div>
-        <div class="review-content">
-          ${review.imageUrl ? `<img src="${review.imageUrl}" alt="Review Image" class="review-image" />` : ''}
-          ${review.videoUrl ? `<video src="${review.videoUrl}" controls class="review-video"></video>` : ''}
-          <p class="review-comment">${review.comment}</p>
-          ${enableSentimentAnalysis && review.sentiment ? 
-            `<span class="sentiment-badge ${review.sentiment.toLowerCase()}">${capitalizeFirstLetter(review.sentiment)}</span>` 
-            : ''}
-        </div>
-        <button class="reply-button" data-review-id="${review.id}">Reply to Review</button>
-        ${repliesHTML}
-      `;
-    };
-
-    const createRepliesHTML = (replies, depth = 0) => {
-      return replies.map(reply => {
-        const replyDate = new Date(reply.createdAt).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        });
-
-        let nestedRepliesHTML = '';
-        if (reply.children && reply.children.length > 0) {
-          nestedRepliesHTML = createRepliesHTML(reply.children, depth + 1);
-        }
-
-        return `
-          <div class="reply" style="margin-left: ${depth * 20}px;">
-            <p><strong>${reply.type} Reply:</strong></p>
-            <p>${reply.content}</p>
-            <p class="reply-date">Replied on ${replyDate}</p>
-            <button class="reply-button" data-review-id="${reply.reviewId}" data-parent-id="${reply.id}">Reply</button>
-            ${nestedRepliesHTML}
-          </div>
-        `;
-      }).join('');
     };
     
     const filterReviews = (rating) => {
@@ -259,6 +250,7 @@
         : allReviews.filter(review => review.rating === parseInt(rating));
       displayReviews(filteredReviews);
     
+      // Update active filter visual indication
       document.querySelectorAll('.rating-row').forEach(row => {
         row.classList.remove('active-filter');
       });
@@ -267,30 +259,29 @@
       }
     };
     
+    // Call these functions in your DOMContentLoaded event listener
     await fetchRatings();
     await fetchReviews();
 
-    const submitReply = async (reviewId, content, parentId = null) => {
-      const response = await fetch(`${apiEndpoint}/api/submit-reply`, {
+    const submitAdminReply = async (reviewId, replyText) => {
+      const response = await fetch(`${apiEndpoint}/api/admin-reply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          reviewId, 
-          content, 
-          parentId,
-          type: 'CUSTOMER'
-        }),
+        body: JSON.stringify({ reviewId, reply: replyText }),
       });
       if (response.ok) {
         alert('Reply submitted successfully');
-        await fetchReviews();
+        await fetchReviews(); // Refresh the reviews list to include the new reply
       } else {
         alert('Failed to submit reply');
       }
     };
 
+    {% comment %} await fetchReviews(); {% endcomment %}
+
+    // Handle form submission
     document.getElementById('review-form').addEventListener('submit', async function (event) {
       event.preventDefault();
       const loading = document.getElementById('loading');
@@ -302,34 +293,33 @@
       formData.append('shopName', document.getElementById('shop-name').value);
       formData.append('productTitle', document.getElementById('product-title').value);
 
-      if (!allowMedia || !isFeatureEnabled(subscriptionPlan, "Images or Video")) {
+      // Log FormData entries
+      {% comment %} for (const [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      } {% endcomment %}
+
+      if (!allowMedia || !isFeatureEnabled(
+        subscriptionPlan,
+        "Images or Video",
+      )) {
         formData.delete('image');
         formData.delete('video');
       }
+  
 
-      try {
-        const response = await fetch(`${apiEndpoint}/api/reviews`, {
-          method: 'POST',
-          body: formData,
-        });
+      await fetch(`${apiEndpoint}/api/reviews`, {
+        method: 'POST',
+        body: formData,
+      });
 
-        if (!response.ok) {
-          throw new Error('Failed to submit review');
-        }
-
-        loading.style.display = 'none';
-        document.getElementById('review-form').reset();
-        document.getElementById('open-modal').classList.remove('is-active');
-        await fetchReviews();
-        await fetchRatings();
-      } catch (error) {
-        console.error('Error submitting review:', error);
-        alert('Failed to submit review. Please try again.');
-      } finally {
-        loading.style.display = 'none';
-      }
+      loading.style.display = 'none';
+      document.getElementById('review-form').reset();
+      document.getElementById('open-modal').classList.remove('is-active');
+      await fetchReviews(); // Refresh the reviews list
+      await fetchRatings(); // Refresh the ratings
     });
 
+    // Open modal
     document.querySelectorAll('.js-modal-trigger').forEach((trigger) => {
       trigger.addEventListener('click', () => {
         const modal = document.getElementById(trigger.dataset.target);
@@ -337,13 +327,19 @@
       });
     });
 
+    // Close modal
     document.querySelectorAll('.modal-close').forEach((closeButton) => {
       closeButton.addEventListener('click', () => {
         document.getElementById('open-modal').classList.remove('is-active');
       });
     });
 
-    if (!allowMedia || !isFeatureEnabled(subscriptionPlan, "Images or Video")) {
+
+    // Conditionally show/hide media inputs
+    if (!allowMedia || !isFeatureEnabled(
+      subscriptionPlan,
+      "Images or Video",
+    )) {
       document.querySelector('label[for="image"]').style.display = 'none';
       document.querySelector('#image').style.display = 'none';
       document.querySelector('label[for="video"]').style.display = 'none';
