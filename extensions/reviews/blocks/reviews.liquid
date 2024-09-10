@@ -56,7 +56,6 @@
   </div>
 </div>
 
-{% comment %} <script src="{{ 'isFeatureEnabled.js' | asset_url }}" defer></script> {% endcomment %}
 <script
   type="module"
 >
@@ -96,7 +95,7 @@
 
     console.log("product title : ", productTitle)    
 
-    const apiEndpoint = 'https://alone-identified-diagnosis-uw.trycloudflare.com';
+    const apiEndpoint = 'https://materials-urls-system-zshops.trycloudflare.com';
 
     // Fetch settings
     const settingsResponse = await fetch(`${apiEndpoint}/api/settings?shopName=${shopName}`);
@@ -171,12 +170,10 @@
 
     const displayReviews = (reviews) => {
       const reviewsList = document.getElementById('reviews-list');
-      reviewsList.innerHTML = ''; // Clear the list before appending new reviews
-    
+      reviewsList.innerHTML = '';
+      
       if (reviews.length === 0) {
-        const noReviewsMessage = document.createElement('p');
-        noReviewsMessage.innerHTML = 'No reviews found.';
-        reviewsList.appendChild(noReviewsMessage);
+        reviewsList.innerHTML = '<p>No reviews found.</p>';
       } else {
         reviews.forEach((review) => {
           const reviewElement = document.createElement('div');
@@ -186,14 +183,13 @@
             month: 'long',
             day: 'numeric',
           });
-    
-          // Create star rating HTML
+      
           const starRating = `
             <div class="star-rating" data-rating="${review.rating}">
               ${Array(5).fill().map((_, i) => `<span class="star" data-rating="${i + 1}">★</span>`).join('')}
             </div>
           `;
-    
+      
           reviewElement.innerHTML = `
             <div class="review-header">
               <div class="avatar-container">
@@ -202,7 +198,7 @@
               <div class="review-info">
                 <p class="reviewer-name">${review.firstName} ${review.lastName ? review.lastName : ''}</p>
                 ${starRating}
-                <p class="review-date"> <span class="reviewer-name">Reviewed on </span>${reviewDate}</p>
+                <p class="review-date"><span class="reviewer-name">Reviewed on </span>${reviewDate}</p>
               </div>
             </div>
             <div class="review-content">
@@ -210,39 +206,32 @@
               ${review.videoUrl ? `<video src="${review.videoUrl}" controls class="review-video"></video>` : ''}
               <p class="review-comment">${review.comment}</p>
               ${enableSentimentAnalysis && review.sentiment ? 
-        `<span class="sentiment-badge ${review.sentiment.toLowerCase()}">${capitalizeFirstLetter(review.sentiment)}</span>` 
-        : ''}
-      ${enableAutomatedResponses && review.AiResponse ? 
-        `<div class="ai-response">
-          <h4>AI Response:</h4>
-          <p>${review.AiResponse}</p>
-        </div>` 
-        : ''}            </div>
-            {% if customer.tags contains "admin" %}
-            <button class="reply-button" data-review-id="${review.id}">Reply to Customer</button>
-            {% endif %}
-            <div class="admin-replies" id="admin-replies-${review.id}">
-              ${review.adminReplies ? review.adminReplies.map(reply => `
-                <p class="review-date"> <span class="reviewer-name">Replied on </span>${new Date(reply.createdAt).toLocaleDateString('en-US')}</p>
-                <p class="admin-reply">${reply.reply}</p>`).join('') : ''}
+                `<span class="sentiment-badge ${review.sentiment.toLowerCase()}">${capitalizeFirstLetter(review.sentiment)}</span>` 
+                : ''}
+            </div>
+            <div class="review-replies">
+              ${(enableAutomatedResponses && review.AiResponse) || (review.adminReplies && review.adminReplies.length > 0) ? 
+                `<div class="store-reply">
+                  <strong>Admin</strong>
+                  
+                  ${review.adminReplies ? review.adminReplies.map(reply => `
+                    <p class="review-date"><span class="reviewer-name">Replied on</span> ${new Date(review.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}</p>
+                    ${enableAutomatedResponses && review.AiResponse ? 
+                    `<p>${review.AiResponse}</p>` : `<p class="admin-reply">${reply.reply}</p>`}
+                    
+                    `).join('') : ''}
+                </div>` : ''}
             </div>
           `;
           reviewsList.appendChild(reviewElement);
         });
-    
-        {% if customer.tags contains "admin" %}
-        document.querySelectorAll('.reply-button').forEach(button => {
-          button.addEventListener('click', () => {
-            const reviewId = button.getAttribute('data-review-id');
-            const replyText = prompt('Enter your reply:');
-            if (replyText) {
-              submitAdminReply(reviewId, replyText);
-            }
-          });
-        });
-        {% endif %}
       }
     };
+  
     
     const filterReviews = (rating) => {
       const filteredReviews = rating === 'all' 
