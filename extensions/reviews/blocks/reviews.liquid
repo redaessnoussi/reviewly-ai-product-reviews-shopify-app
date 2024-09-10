@@ -122,7 +122,7 @@
       if (totalReviews) {
         const globalRatings = document.getElementById('global-ratings');
         globalRatings.innerHTML = `
-          <p>Total Reviews: ${totalReviews}</p>
+          <p><strong>Overall Reviews:</strong> ${totalReviews}</p>
       <button id="show-all-reviews" class="filter-button">Show All Reviews</button>
       <div class="ratings-distribution">
         ${ratingsDistribution.map((rating, index) => `
@@ -209,22 +209,26 @@
                 `<span class="sentiment-badge ${review.sentiment.toLowerCase()}">${capitalizeFirstLetter(review.sentiment)}</span>` 
                 : ''}
             </div>
-            <div class="review-replies">
-              ${(enableAutomatedResponses && review.AiResponse) || (review.adminReplies && review.adminReplies.length > 0) ? 
+            <div class="review-replies">             
+              ${enableAutomatedResponses && review.AiResponse ? 
+                `
+                <div class="store-reply">
+                <strong>Admin</strong>
+                <p class="review-date">
+                 <span class="reviewer-name">Replied on</span> ${reviewDate}
+                </p>
+                <p>${review.AiResponse}</p>
+                ` : `${review.adminReplies ? review.adminReplies.map(reply =>  
                 `<div class="store-reply">
-                  <strong>Admin</strong>
-                  
-                  ${review.adminReplies ? review.adminReplies.map(reply => `
-                    <p class="review-date"><span class="reviewer-name">Replied on</span> ${new Date(review.createdAt).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}</p>
-                    ${enableAutomatedResponses && review.AiResponse ? 
-                    `<p>${review.AiResponse}</p>` : `<p class="admin-reply">${reply.reply}</p>`}
-                    
-                    `).join('') : ''}
-                </div>` : ''}
+                <strong>Admin</strong>
+                <p class="review-date">
+                  <span class="reviewer-name">Replied on</span> ${new
+                  Date(reply.createdAt).toLocaleDateString('en-US', { year: 'numeric', month:
+                  'long', day: 'numeric', })}
+                </p>
+                <p>${reply.reply}</p>`).join('') : ''}`
+               
+              }
             </div>
           `;
           reviewsList.appendChild(reviewElement);
