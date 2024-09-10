@@ -9,10 +9,15 @@ import {
   Divider,
   BlockStack,
   ExceptionList,
+  Layout,
+  InlineStack,
+  Badge,
+  Icon,
+  List,
 } from "@shopify/polaris";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { NoteIcon } from "@shopify/polaris-icons";
+import { CheckIcon, NoteIcon } from "@shopify/polaris-icons";
 import {
   authenticate,
   BASIC_PLAN,
@@ -56,12 +61,12 @@ export async function loader({ request }) {
 
 const planData = [
   {
-    title: "Free Plan",
-    description: "Free plan with basic features",
+    title: "Free",
+    description: "For small stores just getting started",
     price: "0",
-    action: "Upgrade to Pro",
+    action: "Cancel Plan",
     name: "Free Plan",
-    url: "/app/upgrade",
+    url: "/app/cancel",
     features: [
       "Basic Sentiment Analysis",
       "Manual Responses",
@@ -71,7 +76,7 @@ const planData = [
   },
   {
     title: "Basic",
-    description: "Basic plan with advanced features",
+    description: "For growing businesses",
     price: "10",
     name: "Basic Plan",
     action: "Upgrade to Basic",
@@ -87,7 +92,7 @@ const planData = [
   },
   {
     title: "Standard",
-    description: "Standard plan with more features",
+    description: "For established businesses",
     price: "20",
     name: "Standard Plan",
     action: "Upgrade to Standard",
@@ -104,7 +109,7 @@ const planData = [
   },
   {
     title: "Premium",
-    description: "Premium plan with all features",
+    description: "For large-scale operations",
     price: "30",
     name: "Premium Plan",
     action: "Upgrade to Premium",
@@ -120,87 +125,117 @@ const planData = [
       "Bulk Actions (Approve/Reject Reviews)",
       "Review Export/Import",
     ],
+    popular: true,
   },
 ];
 
 export default function PricingPage() {
   const { plan } = useLoaderData();
 
-  console.log("plan : ", plan);
-
   return (
-    <Page title="Pricing">
-      <CalloutCard
-        title="Change your plan"
-        illustration="https://cdn.shopify.com/s/files/1/0583/6465/7734/files/tag.png?v=1705280535"
-        primaryAction={{
-          content: "Cancel Plan",
-          url: "/app/cancel",
-        }}
-      >
-        {plan.name === "Premium Plan" ? (
-          <Text>
-            You're currently on the Premium plan. All features are unlocked.
-          </Text>
-        ) : (
-          <Text>
-            You're currently on the {plan.name}. Upgrade to unlock more
-            features.
-          </Text>
-        )}
-      </CalloutCard>
+    <Page
+      title="Choose Your Plan"
+      subtitle="Select the plan that best fits your business needs"
+    >
+      <Layout>
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="400">
+              <Text variant="headingMd" as="h2">
+                Your current plan:{" "}
+                <Badge tone="success" size="large">
+                  {plan.name}
+                </Badge>
+              </Text>
+              <Text>
+                {plan.name === "Premium Plan"
+                  ? "You're on our top-tier plan. Enjoy all premium features!"
+                  : "Upgrade your plan to unlock more powerful features and grow your business."}
+              </Text>
+              {plan.name !== "Premium Plan" && (
+                <Button url="/app/upgrade" primary>
+                  Upgrade Now
+                </Button>
+              )}
+            </BlockStack>
+          </Card>
+        </Layout.Section>
 
-      <Divider />
+        <Layout.Section>
+          <Grid>
+            {planData.map((planItem, index) => (
+              <Grid.Cell
+                key={index}
+                columnSpan={{ xs: 3, sm: 3, md: 3, lg: 3, xl: 3 }}
+              >
+                <Card
+                  background={
+                    planItem.name === plan.name
+                      ? "bg-surface-secondary"
+                      : undefined
+                  }
+                >
+                  <BlockStack gap="400">
+                    {planItem.popular && (
+                      <Badge tone="attention" size="large">
+                        Most Popular
+                      </Badge>
+                    )}
+                    <Text variant="headingLg" as="h3">
+                      {planItem.title}
+                    </Text>
+                    <Text variant="bodySm" color="subdued">
+                      {planItem.description}
+                    </Text>
+                    <Text variant="heading2xl" as="p">
+                      ${planItem.price}
+                      <Text variant="bodyMd" as="span">
+                        /month
+                      </Text>
+                    </Text>
+                    <Button
+                      primary={planItem.name !== plan.name}
+                      disabled={planItem.name === plan.name}
+                      url={planItem.url}
+                      fullWidth
+                    >
+                      {planItem.name === plan.name
+                        ? "Current Plan"
+                        : planItem.action}
+                    </Button>
+                    <Box padding="400">
+                      {planItem.features.map((feature, featureIndex) => (
+                        <ExceptionList
+                          key={featureIndex}
+                          items={[{ icon: CheckIcon, description: feature }]}
+                        />
+                      ))}
+                    </Box>
+                  </BlockStack>
+                </Card>
+              </Grid.Cell>
+            ))}
+          </Grid>
+        </Layout.Section>
 
-      <Grid>
-        {planData.map((plan_item, index) => (
-          <Grid.Cell
-            key={index}
-            columnSpan={{ xs: 6, sm: 3, md: 3, lg: 6, xl: 6 }}
-          >
-            <Card
-              background={
-                plan_item.name === plan.name
-                  ? "bg-surface-success"
-                  : "bg-surface"
-              }
-              sectioned
-            >
-              <Box padding="400">
-                <Text as="h3" variant="headingMd">
-                  {plan_item.title}
-                </Text>
-                <Box as="div" variant="bodyMd">
-                  <Text as="p">{plan_item.description}</Text>
-                  <br />
-                  <Text as="p" variant="headingLg" fontWeight="bold">
-                    {plan_item.price === "0" ? "" : "$" + plan_item.price}
-                  </Text>
-                </Box>
-                <Divider />
-                <BlockStack gap={100}>
-                  {plan_item.features.map((feature, index) => (
-                    <ExceptionList
-                      key={index}
-                      items={[{ icon: NoteIcon, description: feature }]}
-                    />
-                  ))}
-                </BlockStack>
-                <Divider />
-                {plan_item.name !== plan.name ? (
-                  <Button primary url={plan_item.url}>
-                    {plan_item.action}
-                  </Button>
-                ) : (
-                  <Text as="p" variant="bodyMd">
-                    You're currently on this plan
-                  </Text>
-                )}
-              </Box>
-            </Card>
-          </Grid.Cell>
-        ))}
-      </Grid>
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="400">
+              <Text variant="headingMd" as="h2">
+                Need to change your plan?
+              </Text>
+              <Text>
+                If you're considering downgrading or have questions about your
+                current plan, our support team is here to help. We can discuss
+                your needs and find the best solution.
+              </Text>
+              <Button url="/app/contact-support" outline>
+                Contact Support
+              </Button>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+      </Layout>
     </Page>
   );
 }
