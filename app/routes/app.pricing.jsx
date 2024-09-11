@@ -98,13 +98,13 @@ const planData = [
     action: "Upgrade to Standard",
     url: "/app/upgrade?plan=Standard Plan",
     features: [
-      "Advanced Sentiment Analysis",
+      "AI Sentiment Analysis",
       "Manual Responses",
       "Review Moderation",
       "Basic Analytics",
       "Images or Video",
       "Email Notifications",
-      "Automated Responses",
+      "AI Auto Response",
     ],
   },
   {
@@ -115,13 +115,13 @@ const planData = [
     action: "Upgrade to Premium",
     url: "/app/upgrade?plan=Premium Plan",
     features: [
-      "Advanced Sentiment Analysis",
+      "AI Sentiment Analysis",
       "Manual Responses",
       "Review Moderation",
       "Advanced Analytics",
       "Images or Video",
       "Email Notifications",
-      "Automated Responses",
+      "AI Auto Response",
       "Bulk Actions (Approve/Reject Reviews)",
       "Review Export/Import",
     ],
@@ -153,7 +153,7 @@ export default function PricingPage() {
                   : "Upgrade your plan to unlock more powerful features and grow your business."}
               </Text>
               {plan.name !== "Premium Plan" && (
-                <Button url="/app/upgrade" primary>
+                <Button url="/app/upgrade?plan=Premium Plan" primary>
                   Upgrade Now
                 </Button>
               )}

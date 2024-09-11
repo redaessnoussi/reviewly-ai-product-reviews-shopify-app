@@ -1,8 +1,6 @@
-// File: app/routes/app.contact-support.jsx
-
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { json } from "@remix-run/node";
-import { useActionData, useSubmit } from "@remix-run/react";
+import { useActionData, Form, useNavigation } from "@remix-run/react";
 import {
   Page,
   Layout,
@@ -13,36 +11,71 @@ import {
   Button,
   InlineError,
   BlockStack,
-  Text,
   Banner,
 } from "@shopify/polaris";
+import { sendSupportEmail } from "../utils/sendEmails";
 
-export async function action({ request }) {
+// Server-side action function
+export const action = async ({ request }) => {
   const formData = await request.formData();
   const name = formData.get("name");
   const email = formData.get("email");
   const reason = formData.get("reason");
   const message = formData.get("message");
 
-  // Validate form data
   const errors = {};
+
+  // Validation checks
   if (!name) errors.name = "Name is required";
   if (!email) errors.email = "Email is required";
-  if (!reason) errors.reason = "Reason is required";
+  if (!reason) errors.reason = "Please select a reason for contact";
   if (!message) errors.message = "Message is required";
 
-  if (Object.keys(errors).length > 0) {
-    return json({ errors });
+  // If there are validation errors, return them
+  if (Object.keys(errors).length) {
+    return json({ errors }, { status: 400 });
   }
 
-  // TODO: Implement actual form submission logic here
-  // For now, we'll just simulate a successful submission
-  return json({ success: true });
-}
+  try {
+    // Call the sendSupportEmail function to send the email
+    await sendSupportEmail({
+      to: "redavan95@gmail.com",
+      name,
+      email,
+      reason,
+      message,
+    });
+
+    // If the email is sent successfully, return a success response
+    return json({ success: true });
+  } catch (error) {
+    console.error("Failed to send support email:", error);
+
+    // Check if it's the specific Resend error
+    if (error.statusCode === 403) {
+      return json(
+        {
+          errors: {
+            form: "Unable to send email. You only send to authorized email addresses at Resend.",
+          },
+        },
+        { status: 403 },
+      );
+    }
+
+    // For any other errors
+    return json(
+      { errors: { form: "Failed to send message. Please try again later." } },
+      { status: 500 },
+    );
+  }
+};
 
 export default function ContactSupport() {
   const actionData = useActionData();
-  const submit = useSubmit();
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === "submitting";
+
   const [formState, setFormState] = useState({
     name: "",
     email: "",
@@ -50,13 +83,31 @@ export default function ContactSupport() {
     message: "",
   });
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    submit(event.currentTarget, { replace: true });
-  };
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
 
-  const handleChange = (value, name) => {
-    setFormState((prev) => ({ ...prev, [name]: value }));
+  useEffect(() => {
+    if (actionData?.success) {
+      setShowSuccessBanner(true);
+      // Clear form state on successful submission
+      setFormState({
+        name: "",
+        email: "",
+        reason: "",
+        message: "",
+      });
+      // Hide success banner after 5 seconds
+      const timer = setTimeout(() => {
+        setShowSuccessBanner(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [actionData]);
+
+  const handleChange = (value, field) => {
+    setFormState((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   return (
@@ -67,14 +118,25 @@ export default function ContactSupport() {
       <Layout>
         <Layout.Section>
           <Card>
-            <BlockStack gap="400">
-              {actionData?.success && (
-                <Banner tone="success">
+            <BlockStack gap="4">
+              {showSuccessBanner && (
+                <Banner
+                  tone="success"
+                  onDismiss={() => setShowSuccessBanner(false)}
+                >
                   Your message has been sent successfully. We'll get back to you
                   soon.
                 </Banner>
               )}
-              <form onSubmit={handleSubmit}>
+              {actionData?.errors?.form && (
+                <Banner
+                  tone="critical"
+                  onDismiss={() => setShowSuccessBanner(false)}
+                >
+                  {actionData.errors.form}
+                </Banner>
+              )}
+              <Form method="post">
                 <FormLayout>
                   <TextField
                     label="Name"
@@ -113,11 +175,11 @@ export default function ContactSupport() {
                     multiline={4}
                     error={actionData?.errors?.message}
                   />
-                  <Button submit primary>
-                    Send message
+                  <Button submit primary loading={isSubmitting}>
+                    {isSubmitting ? "Sending..." : "Send message"}
                   </Button>
                 </FormLayout>
-              </form>
+              </Form>
             </BlockStack>
           </Card>
         </Layout.Section>
