@@ -15,7 +15,6 @@ import {
 } from "./utils/subscriptionPlan";
 
 export const BASIC_PLAN = "Basic Plan";
-export const STANDARD_PLAN = "Standard Plan";
 export const PREMIUM_PLAN = "Premium Plan";
 
 const shopify = shopifyApp({
@@ -32,17 +31,12 @@ const shopify = shopifyApp({
   // billing for free and paid plans: https://shopify.dev/docs/api/shopify-app-remix/v2/apis/billing
   billing: {
     [BASIC_PLAN]: {
-      amount: 10,
-      currencyCode: "USD",
-      interval: BillingInterval.Every30Days,
-    },
-    [STANDARD_PLAN]: {
-      amount: 20,
+      amount: 19,
       currencyCode: "USD",
       interval: BillingInterval.Every30Days,
     },
     [PREMIUM_PLAN]: {
-      amount: 30,
+      amount: 29,
       currencyCode: "USD",
       interval: BillingInterval.Every30Days,
     },

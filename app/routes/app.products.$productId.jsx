@@ -1,11 +1,6 @@
 import { json } from "@remix-run/node";
 import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
-import {
-  authenticate,
-  BASIC_PLAN,
-  PREMIUM_PLAN,
-  STANDARD_PLAN,
-} from "../shopify.server";
+import { authenticate, BASIC_PLAN, PREMIUM_PLAN } from "../shopify.server";
 import prisma from "../db.server";
 import {
   Page,
@@ -102,7 +97,7 @@ export const loader = async ({ request, params }) => {
 
   try {
     const billingCheck = await billing.require({
-      plans: [BASIC_PLAN, STANDARD_PLAN, PREMIUM_PLAN],
+      plans: [BASIC_PLAN, PREMIUM_PLAN],
       isTest: true,
       onFailure: () => {
         throw new Error("No active plan");

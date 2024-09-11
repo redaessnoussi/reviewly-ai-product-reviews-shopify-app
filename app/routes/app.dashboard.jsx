@@ -31,12 +31,7 @@ import {
 import { Line } from "react-chartjs-2";
 import { json, useLoaderData, useNavigate } from "@remix-run/react";
 import { isFeatureEnabled } from "../utils/isFeatureEnabled";
-import {
-  authenticate,
-  BASIC_PLAN,
-  PREMIUM_PLAN,
-  STANDARD_PLAN,
-} from "../shopify.server";
+import { authenticate, BASIC_PLAN, PREMIUM_PLAN } from "../shopify.server";
 import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
 import RatingStars from "../components/Home/RatingStars";
 
@@ -58,7 +53,7 @@ export async function loader({ request }) {
 
   try {
     const billingCheck = await billing.require({
-      plans: [BASIC_PLAN, STANDARD_PLAN, PREMIUM_PLAN],
+      plans: [BASIC_PLAN, PREMIUM_PLAN],
       isTest: true,
       onFailure: () => {
         throw new Error("No active plan");

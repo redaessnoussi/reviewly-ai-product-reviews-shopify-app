@@ -9,7 +9,6 @@ import {
   TextField,
   Select,
   Button,
-  InlineError,
   BlockStack,
   Banner,
 } from "@shopify/polaris";

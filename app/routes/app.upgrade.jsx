@@ -1,10 +1,5 @@
 import { redirect } from "@remix-run/node";
-import {
-  authenticate,
-  BASIC_PLAN,
-  STANDARD_PLAN,
-  PREMIUM_PLAN,
-} from "../shopify.server";
+import { authenticate, BASIC_PLAN, PREMIUM_PLAN } from "../shopify.server";
 // import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
 
 export const loader = async ({ request }) => {
@@ -20,9 +15,6 @@ export const loader = async ({ request }) => {
   switch (plan) {
     case "Basic Plan":
       selectedPlan = BASIC_PLAN;
-      break;
-    case "Standard Plan":
-      selectedPlan = STANDARD_PLAN;
       break;
     case "Premium Plan":
       selectedPlan = PREMIUM_PLAN;

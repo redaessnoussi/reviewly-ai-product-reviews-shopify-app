@@ -14,15 +14,6 @@ export const isFeatureEnabled = (userPlan, feature) => {
       "Images or Video",
       "Email Notifications",
     ],
-    "Standard Plan": [
-      "Advanced Sentiment Analysis",
-      "Manual Responses",
-      "Review Moderation",
-      "Basic Analytics",
-      "Images or Video",
-      "Email Notifications",
-      "Automated Responses",
-    ],
     "Premium Plan": [
       "Advanced Sentiment Analysis",
       "Manual Responses",

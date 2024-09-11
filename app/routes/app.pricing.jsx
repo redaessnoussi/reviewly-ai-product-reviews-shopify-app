@@ -3,27 +3,17 @@ import {
   Box,
   Button,
   Card,
-  CalloutCard,
   Text,
   Grid,
-  Divider,
   BlockStack,
   ExceptionList,
   Layout,
-  InlineStack,
   Badge,
-  Icon,
-  List,
 } from "@shopify/polaris";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { CheckIcon, NoteIcon } from "@shopify/polaris-icons";
-import {
-  authenticate,
-  BASIC_PLAN,
-  PREMIUM_PLAN,
-  STANDARD_PLAN,
-} from "../shopify.server";
+import { CheckIcon } from "@shopify/polaris-icons";
+import { authenticate, BASIC_PLAN, PREMIUM_PLAN } from "../shopify.server";
 import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
 
 export async function loader({ request }) {
@@ -32,7 +22,7 @@ export async function loader({ request }) {
 
   try {
     const billingCheck = await billing.require({
-      plans: [BASIC_PLAN, STANDARD_PLAN, PREMIUM_PLAN],
+      plans: [BASIC_PLAN, PREMIUM_PLAN],
       isTest: true,
       onFailure: () => {
         throw new Error("No active plan");
@@ -88,23 +78,6 @@ const planData = [
       "Basic Analytics",
       "Images or Video",
       "Email Notifications",
-    ],
-  },
-  {
-    title: "Standard",
-    description: "For established businesses",
-    price: "20",
-    name: "Standard Plan",
-    action: "Upgrade to Standard",
-    url: "/app/upgrade?plan=Standard Plan",
-    features: [
-      "AI Sentiment Analysis",
-      "Manual Responses",
-      "Review Moderation",
-      "Basic Analytics",
-      "Images or Video",
-      "Email Notifications",
-      "AI Auto Response",
     ],
   },
   {
