@@ -139,7 +139,7 @@ export default function PricingPage() {
             {planData.map((planItem, index) => (
               <Grid.Cell
                 key={index}
-                columnSpan={{ xs: 3, sm: 3, md: 3, lg: 3, xl: 3 }}
+                columnSpan={{ xs: 4, sm: 4, md: 4, lg: 4, xl: 4 }}
               >
                 <Card
                   background={
