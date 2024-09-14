@@ -1,6 +1,28 @@
 {{ 'reviewStyle.css' | asset_url | stylesheet_tag }}
 
+{% assign subscription_plan = shop.metafields.app_subscription.current_plan %}
+
 <div class="shopify-product-reviews">
+  {% if subscription_plan == 'Premium Plan' %}
+    <!-- Render premium content -->
+    <div class="premium-content">
+      <!-- Exclusive features for Premium users -->
+      <h1>Premium Plan</h1>
+    </div>
+  {% elsif subscription_plan == 'Basic Plan' %}
+    <!-- Render basic content -->
+    <div class="basic-content">
+      <!-- Features for Basic users -->
+      <h1>Basic Plan</h1>
+    </div>
+  {% else %}
+    <!-- Render free content -->
+    <div class="free-content">
+      <h1>Free Plan</h1>
+      <!-- Content available to all users -->
+    </div>
+  {% endif %}
+
   <div class="columns">
     <div class="column">
       <h2>Customer reviews</h2>
@@ -95,7 +117,7 @@
 
     console.log("product title : ", productTitle)    
 
-    const apiEndpoint = 'https://materials-urls-system-zshops.trycloudflare.com';
+    const apiEndpoint = 'https://unique-thinkpad-tiger-diary.trycloudflare.com';
 
     // Fetch settings
     const settingsResponse = await fetch(`${apiEndpoint}/api/settings?shopName=${shopName}`);

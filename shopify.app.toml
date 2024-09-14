@@ -3,7 +3,7 @@
 client_id = "6f355af6c9e006c8557d57d8c2566fcb"
 name = "Reviewly"
 handle = "reviewly-ai"
-application_url = "https://tackle-smallest-crossing-gotta.trycloudflare.com"
+application_url = "https://emergency-instance-jack-pk.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://tackle-smallest-crossing-gotta.trycloudflare.com/auth/callback",
-  "https://tackle-smallest-crossing-gotta.trycloudflare.com/auth/shopify/callback",
-  "https://tackle-smallest-crossing-gotta.trycloudflare.com/api/auth/callback"
+  "https://emergency-instance-jack-pk.trycloudflare.com/auth/callback",
+  "https://emergency-instance-jack-pk.trycloudflare.com/auth/shopify/callback",
+  "https://emergency-instance-jack-pk.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

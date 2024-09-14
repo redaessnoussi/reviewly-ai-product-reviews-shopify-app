@@ -32,8 +32,6 @@ export async function loader({ request }) {
     const subscription = billingCheck.appSubscriptions[0];
     console.log(`Shop is on ${subscription.name} (id ${subscription.id})`);
 
-    console.log("\n\n pricing shop name:", shop);
-
     await updateSubscriptionPlan(shop, subscription.name);
 
     return json({ plan: subscription });

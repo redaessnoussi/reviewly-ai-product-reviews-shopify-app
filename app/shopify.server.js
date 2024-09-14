@@ -46,42 +46,14 @@ const shopify = shopifyApp({
       deliveryMethod: DeliveryMethod.Http,
       callbackUrl: "/webhooks",
     },
+    APP_SUBSCRIPTIONS_UPDATE: {
+      deliveryMethod: DeliveryMethod.Http,
+      callbackUrl: "/webhooks",
+    },
   },
-
   hooks: {
     afterAuth: async ({ session }) => {
-      try {
-        console.log("App installed, initializing settings...");
-        const shop = session.shop;
-
-        console.log("Seeding initial subscription plans...");
-        const defaultPlan = [{ shop, subscription: "Free Plan" }];
-        await seedSubscriptionPlans(defaultPlan);
-
-        const shopRecord = await ensureShopRecord(shop);
-
-        const existingSettings = await prisma.settings.findUnique({
-          where: { shopId: shopRecord.id },
-        });
-
-        if (!existingSettings) {
-          await prisma.settings.create({
-            data: {
-              shopId: shopRecord.id,
-              enableSentimentAnalysis: false,
-              enableAutomatedResponses: false,
-              allowMedia: true,
-            },
-          });
-          console.log(`Default settings created for shop: ${shop}`);
-        } else {
-          console.log(`Settings already exist for shop: ${shop}`);
-        }
-      } catch (e) {
-        console.log("shopify.server.js", e);
-      }
-
-      await registerWebhooks({ session });
+      shopify.registerWebhooks({ session });
     },
   },
   future: {

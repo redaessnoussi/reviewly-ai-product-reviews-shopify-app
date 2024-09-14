@@ -1,40 +1,30 @@
-import { redirect } from "@remix-run/node";
+// app/routes/app.upgrade.jsx
+
 import { authenticate, BASIC_PLAN, PREMIUM_PLAN } from "../shopify.server";
-// import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
 
 export const loader = async ({ request }) => {
   const { billing, session } = await authenticate.admin(request);
+  const url = new URL(request.url);
+
+  // Get the selected plan from the query parameter
+  const selectedPlan = url.searchParams.get("plan"); // either "basic" or "premium"
+
+  // Determine which plan to request based on the query parameter
+  const plan = selectedPlan === "Premium Plan" ? PREMIUM_PLAN : BASIC_PLAN; // default to BASIC_PLAN if not "premium"
+
   let { shop } = session;
   let myShop = shop.replace(".myshopify.com", "");
 
-  const url = new URL(request.url);
-  const plan = url.searchParams.get("plan");
-
-  let selectedPlan;
-
-  switch (plan) {
-    case "Basic Plan":
-      selectedPlan = BASIC_PLAN;
-      break;
-    case "Premium Plan":
-      selectedPlan = PREMIUM_PLAN;
-      break;
-    default:
-      throw new Error("Invalid plan selected");
-  }
-
-  // await updateSubscriptionPlan(shop, selectedPlan);
-
+  // Check for active subscription or request the selected plan if none is active
   await billing.require({
-    plans: [selectedPlan],
+    plans: [BASIC_PLAN, PREMIUM_PLAN],
     onFailure: async () =>
       billing.request({
-        plan: selectedPlan,
+        plan,
         isTest: true,
         returnUrl: `https://admin.shopify.com/store/${myShop}/apps/${process.env.APP_NAME}/app/pricing`,
       }),
   });
 
-  // App logic
-  return null;
+  return null; // After the upgrade, the user will be redirected back to the pricing page
 };

@@ -7,17 +7,24 @@ import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import { authenticate } from "../shopify.server";
+import { getSubscriptionStatus } from "../models/subscription.server";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }) => {
-  await authenticate.admin(request);
+  const { session, admin } = await authenticate.admin(request);
 
-  return json({ apiKey: process.env.SHOPIFY_API_KEY || "" });
+  const subscription = await getSubscriptionStatus(admin.graphql);
+
+  // console.log("plan li 3and user", subscription.name);
+
+  return json({ apiKey: process.env.SHOPIFY_API_KEY || "", subscription });
 };
 
 export default function App() {
-  const { apiKey } = useLoaderData();
+  const { apiKey, subscription } = useLoaderData();
+
+  // console.log("subscription Front", subscription);
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>

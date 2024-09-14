@@ -1,33 +1,23 @@
 // // app._index.jsx
 
-import { useNavigate } from "@remix-run/react";
-import { useEffect } from "react";
-
 // import { json } from "@remix-run/node";
 // import { authenticate } from "../shopify.server";
 // import { useLoaderData } from "@remix-run/react";
 
-// import { redirect } from "@remix-run/node";
+import { Page } from "@shopify/polaris";
 
 // export const loader = async ({ request }) => {
-//   // const auth = await authenticate.admin(request);
-//   // const shop = auth.session.shop;
+//   await authenticate.admin(request);
 
 //   return null;
 // };
 
-export const action = async ({ request }) => {};
+// export const action = async ({ request }) => {};
 
 export default function Index() {
-  // const { auth, shop } = useLoaderData();
-  const navigate = useNavigate();
-
-  // console.log("auth ", auth);
-  // console.log("shop ", shop);
-
-  useEffect(() => {
-    navigate("/app/dashboard");
-  }, []);
-
-  return null;
+  return (
+    <Page title="App Index">
+      <h1>App Index</h1>
+    </Page>
+  );
 }
