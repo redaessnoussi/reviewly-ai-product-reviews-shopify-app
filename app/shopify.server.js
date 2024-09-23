@@ -9,10 +9,6 @@ import {
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import { restResources } from "@shopify/shopify-api/rest/admin/2024-04";
 import prisma from "./db.server";
-import {
-  ensureShopRecord,
-  seedSubscriptionPlans,
-} from "./utils/subscriptionPlan";
 
 export const BASIC_PLAN = "Basic Plan";
 export const PREMIUM_PLAN = "Premium Plan";
@@ -28,7 +24,6 @@ const shopify = shopifyApp({
   distribution: AppDistribution.AppStore,
   isEmbeddedApp: true,
   restResources,
-  // billing for free and paid plans: https://shopify.dev/docs/api/shopify-app-remix/v2/apis/billing
   billing: {
     [BASIC_PLAN]: {
       amount: 19,

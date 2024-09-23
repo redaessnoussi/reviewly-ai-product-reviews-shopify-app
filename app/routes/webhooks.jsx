@@ -33,6 +33,7 @@ export const action = async ({ request }) => {
       break;
     case "APP_SUBSCRIPTIONS_UPDATE":
       console.log("\n APP_SUBSCRIPTIONS_UPDATE \n");
+      console.log("Webhook payload for APP_SUBSCRIPTIONS_UPDATE:", payload);
       await handleSubscriptionChange(admin, shop, payload);
       break;
     case "CUSTOMERS_DATA_REQUEST":

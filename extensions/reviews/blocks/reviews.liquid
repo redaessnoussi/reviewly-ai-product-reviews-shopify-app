@@ -117,16 +117,14 @@
 
     console.log("product title : ", productTitle)    
 
-    const apiEndpoint = 'https://unique-thinkpad-tiger-diary.trycloudflare.com';
+    const apiEndpoint = 'https://born-behalf-survival-tremendous.trycloudflare.com';
 
     // Fetch settings
     const settingsResponse = await fetch(`${apiEndpoint}/api/settings?shopName=${shopName}`);
     const settings = await settingsResponse.json();
 
     //Fetch subscription plan
-    const subscriptionPlanResponse = await fetch(`${apiEndpoint}/api/subscription-plan?shopName=${shopName}`);
-    const subscriptionPlan = await subscriptionPlanResponse.json();
-
+    const subscriptionPlan = "{{ shop.metafields.app_subscription.current_plan }}";
     console.log("liquid subscriptionPlan", subscriptionPlan)
 
     const enableSentimentAnalysis = settings.enableSentimentAnalysis;
