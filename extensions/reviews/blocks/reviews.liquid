@@ -61,6 +61,8 @@
           <input type="text" id="firstName" name="firstName" required>
           <label for="lastName">Last Name:</label>
           <input type="text" id="lastName" name="lastName">
+          <label for="customerEmail">Email:</label>
+          <input type="email" id="customerEmail" name="customerEmail" required>
           {% comment %}
             <label for="rating">Rating:</label>
             <input type="number" id="rating" name="rating" step="1" min="1" max="5" required>
@@ -117,7 +119,7 @@
 
     console.log("product title : ", productTitle)    
 
-    const apiEndpoint = 'https://born-behalf-survival-tremendous.trycloudflare.com';
+    const apiEndpoint = 'https://ware-shaved-internship-stickers.trycloudflare.com';
 
     // Fetch settings
     const settingsResponse = await fetch(`${apiEndpoint}/api/settings?shopName=${shopName}`);

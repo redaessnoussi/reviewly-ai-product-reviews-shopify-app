@@ -193,6 +193,7 @@
 
   #review-form input[type="text"],
   #review-form input[type="number"],
+  #review-form input[type="email"],
   #review-form textarea {
     width: 100%;
     padding: 8px;

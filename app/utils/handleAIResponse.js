@@ -19,7 +19,7 @@ export async function handleAIResponse(comment, settings, subscriptionPlan) {
         messages: [
           {
             role: "user",
-            content: `Generate a response for the following review:\n\n"${comment}"`,
+            content: `Generate a short, polite, and friendly response (max 20 words) for the following review:\n\n"${comment}"`,
           },
         ],
         stream: false,

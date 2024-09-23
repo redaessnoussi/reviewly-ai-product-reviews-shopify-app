@@ -52,6 +52,7 @@ model Review {
   imageUrl     String?
   videoUrl     String?
   approved     Boolean      @default(false)
+  email        String? // Add email field here
 }
 
 model Product {

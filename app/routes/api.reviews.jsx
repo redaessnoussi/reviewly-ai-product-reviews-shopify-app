@@ -43,16 +43,24 @@ export const action = async ({ request }) => {
     comment,
     firstName,
     lastName,
+    customerEmail,
     rating,
     shopName,
     productTitle,
   } = data;
 
-  if (!productId || !comment || !firstName || rating == null || !shopName) {
+  if (
+    !productId ||
+    !comment ||
+    !firstName ||
+    !customerEmail ||
+    rating == null ||
+    !shopName
+  ) {
     return json(
       {
         error:
-          "Shop name, Product ID, comment, first name, and rating are required",
+          "Shop name, Product ID, comment, first name, email, and rating are required",
       },
       { status: 400 },
     );
@@ -130,6 +138,7 @@ export const action = async ({ request }) => {
         createdAt: new Date(),
         firstName,
         lastName,
+        email: customerEmail,
         rating: parseFloat(rating),
         sentiment,
         AiResponse: aiResponse,
@@ -152,6 +161,7 @@ export const action = async ({ request }) => {
         productId: productId,
         firstName: firstName,
         lastName: lastName,
+        customerEmail, // Include the email in the notification if necessary
         rating: rating,
         comment: comment,
       });

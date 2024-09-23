@@ -7,6 +7,7 @@ const sendEmail = async ({
   productId,
   firstName,
   lastName,
+  customerEmail,
   rating,
   comment,
 }) => {
@@ -69,6 +70,7 @@ const sendEmail = async ({
                 <p>Hello Admin,</p>
                 <p>A new review has been submitted for the product with ID <strong>${productId}</strong>.</p>
                 <p><strong>Reviewer:</strong> ${firstName} ${lastName}</p>
+                <p><strong>Email:</strong> ${customerEmail} </p>                
                 <p><strong>Rating:</strong> ${rating}</p>
                 <p><strong>Comment:</strong> ${comment}</p>
                 <p>Best regards,</p>
