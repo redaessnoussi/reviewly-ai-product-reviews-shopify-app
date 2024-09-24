@@ -1,4 +1,4 @@
-{{ 'style/reviewStyle.css' | asset_url | stylesheet_tag }}
+{{ 'reviewStyle.css' | asset_url | stylesheet_tag }}
 
 <div class="shopify-product-reviews">
   {% render 'subscription_content' %}
@@ -30,19 +30,19 @@
   </div>
 </div>
 
-<script type="module" src="{{ 'js/reviewFormHandler.js' | asset_url }}"></script>
+<script type="module" src="{{ 'reviewFormHandler.js' | asset_url }}"></script>
 
 <script
   type="module"
 >
-  import { isFeatureEnabled } from '{{ 'js/isFeatureEnabled.js' | asset_url }}';
-  import { fetchSettings } from '{{ 'js/fetchSettings.js' | asset_url }}';
-  import { getSubscriptionPlan } from '{{ 'js/fetchSubscription.js' | asset_url }}';
-  import { fetchRatings, displayRatings } from '{{ 'js/fetchRatings.js' | asset_url }}';
-  import { fetchReviews, displayReviews } from '{{ 'js/fetchReviews.js' | asset_url }}';
-  import { handleFormSubmission } from '{{ 'js/handleFormSubmission.js' | asset_url }}';
-  import { setupModalHandlers } from '{{ 'js/modalHandlers.js' | asset_url }}';
-  import { setupStarRating } from '{{ 'js/starRating.js' | asset_url }}';
+  import { isFeatureEnabled } from '{{ 'isFeatureEnabled.js' | asset_url }}';
+  import { fetchSettings } from '{{ 'fetchSettings.js' | asset_url }}';
+  import { getSubscriptionPlan } from '{{ 'fetchSubscription.js' | asset_url }}';
+  import { fetchRatings, displayRatings } from '{{ 'fetchRatings.js' | asset_url }}';
+  import { fetchReviews, displayReviews } from '{{ 'fetchReviews.js' | asset_url }}';
+  import { handleFormSubmission } from '{{ 'handleFormSubmission.js' | asset_url }}';
+  import { setupModalHandlers } from '{{ 'modalHandlers.js' | asset_url }}';
+  import { setupStarRating } from '{{ 'starRating.js' | asset_url }}';
 
   document.addEventListener('DOMContentLoaded', async function () {
     const apiEndpoint = 'https://revolution-thousands-smoking-der.trycloudflare.com';
