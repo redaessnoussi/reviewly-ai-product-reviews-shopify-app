@@ -1,7 +1,5 @@
 {{ 'style/reviewStyle.css' | asset_url | stylesheet_tag }}
 
-{% assign subscription_plan = shop.metafields.app_subscription.current_plan %}
-
 <div class="shopify-product-reviews">
   {% render 'subscription_content' %}
 
