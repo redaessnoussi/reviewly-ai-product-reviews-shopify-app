@@ -283,39 +283,6 @@
   }
 }
 
-/* star rating syle  */
-
-.shopify-product-reviews .star-rating {
-  display: inline-flex;
-  flex-direction: row;
-  font-size: 20px;
-}
-
-.shopify-product-reviews .star-rating .star {
-  line-height: 32px;
-  font-size: 32px; /* Increased size */
-  color: #ddd;
-  transition: color 0.1s ease-in-out;
-}
-
-.shopify-product-reviews .clickable {
-  cursor: pointer;
-}
-
-.shopify-product-reviews .star-rating .star:hover,
-.shopify-product-reviews .star-rating .star:hover ~ .star,
-.shopify-product-reviews .star-rating[data-rating] .star {
-  color: #ddd; /* Changed to a standard gold color */
-}
-
-.shopify-product-reviews .star-rating[data-rating="1"] .star:nth-child(1),
-.shopify-product-reviews .star-rating[data-rating="2"] .star:nth-child(-n + 2),
-.shopify-product-reviews .star-rating[data-rating="3"] .star:nth-child(-n + 3),
-.shopify-product-reviews .star-rating[data-rating="4"] .star:nth-child(-n + 4),
-.shopify-product-reviews .star-rating[data-rating="5"] .star:nth-child(-n + 5) {
-  color: #ffd700;
-}
-
 /* ratings progress bar  */
 
 .shopify-product-reviews .ratings-distribution {

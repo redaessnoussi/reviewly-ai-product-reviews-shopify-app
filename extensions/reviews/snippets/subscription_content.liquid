@@ -1,0 +1,15 @@
+{% assign subscription_plan = shop.metafields.app_subscription.current_plan %}
+
+{% if subscription_plan == 'Premium Plan' %}
+  <div class="premium-content">
+    <h1>Premium Plan</h1>
+  </div>
+{% elsif subscription_plan == 'Basic Plan' %}
+  <div class="basic-content">
+    <h1>Basic Plan</h1>
+  </div>
+{% else %}
+  <div class="free-content">
+    <h1>Free Plan</h1>
+  </div>
+{% endif %}

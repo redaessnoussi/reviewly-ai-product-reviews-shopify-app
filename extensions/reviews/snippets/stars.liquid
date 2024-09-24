@@ -1,10 +1,8 @@
-{{ 'ratings.stars.label' | t }}:
+{{ 'style/starsStyle.css' | asset_url | stylesheet_tag }}
 
-{%- for i in (1..rating) -%}
-  ★
-{%- endfor -%}
-{%- assign blank_stars = 5 | minus: rating -%}
-{%- for i in (1..blank_stars) -%}
-  ☆
-{%- endfor -%}
-
+<div class="star-rating" data-rating="{{ rating | default: 0 }}">
+  {% for i in (1..5) %}
+    <span class="star clickable" data-rating="{{ i }}">★</span>
+  {% endfor %}
+  <input type="hidden" id="rating" name="rating" required>
+</div>

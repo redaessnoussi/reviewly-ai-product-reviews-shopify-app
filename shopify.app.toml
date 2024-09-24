@@ -3,7 +3,7 @@
 client_id = "6f355af6c9e006c8557d57d8c2566fcb"
 name = "Reviewly"
 handle = "reviewly-ai"
-application_url = "https://ware-shaved-internship-stickers.trycloudflare.com"
+application_url = "https://revolution-thousands-smoking-der.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://ware-shaved-internship-stickers.trycloudflare.com/auth/callback",
-  "https://ware-shaved-internship-stickers.trycloudflare.com/auth/shopify/callback",
-  "https://ware-shaved-internship-stickers.trycloudflare.com/api/auth/callback"
+  "https://revolution-thousands-smoking-der.trycloudflare.com/auth/callback",
+  "https://revolution-thousands-smoking-der.trycloudflare.com/auth/shopify/callback",
+  "https://revolution-thousands-smoking-der.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

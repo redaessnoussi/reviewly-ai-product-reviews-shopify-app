@@ -1,27 +1,9 @@
-{{ 'reviewStyle.css' | asset_url | stylesheet_tag }}
+{{ 'style/reviewStyle.css' | asset_url | stylesheet_tag }}
 
 {% assign subscription_plan = shop.metafields.app_subscription.current_plan %}
 
 <div class="shopify-product-reviews">
-  {% if subscription_plan == 'Premium Plan' %}
-    <!-- Render premium content -->
-    <div class="premium-content">
-      <!-- Exclusive features for Premium users -->
-      <h1>Premium Plan</h1>
-    </div>
-  {% elsif subscription_plan == 'Basic Plan' %}
-    <!-- Render basic content -->
-    <div class="basic-content">
-      <!-- Features for Basic users -->
-      <h1>Basic Plan</h1>
-    </div>
-  {% else %}
-    <!-- Render free content -->
-    <div class="free-content">
-      <h1>Free Plan</h1>
-      <!-- Content available to all users -->
-    </div>
-  {% endif %}
+  {% render 'subscription_content' %}
 
   <div class="columns">
     <div class="column">
@@ -43,323 +25,46 @@
   <div class="modal" id="open-modal">
     <div class="modal-content">
       <div class="box">
-        <form id="review-form">
-          <input type="hidden" id="product-id" value="{{ block.settings.product.id }}">
-          <input type="hidden" id="shop-name" value="{{ shop.domain }}">
-          <input type="hidden" id="product-title" value="{{ product.title }}">
-          <div class="star-rating" data-rating="0">
-            <span class="star clickable" data-rating="1">★</span>
-            <span class="star clickable" data-rating="2">★</span>
-            <span class="star clickable" data-rating="3">★</span>
-            <span class="star clickable" data-rating="4">★</span>
-            <span class="star clickable" data-rating="5">★</span>
-            <input type="hidden" id="rating" name="rating" required>
-          </div>
-          <label for="comment">Comments:</label>
-          <textarea id="comment" name="comment" required></textarea>
-          <label for="firstName">First Name:</label>
-          <input type="text" id="firstName" name="firstName" required>
-          <label for="lastName">Last Name:</label>
-          <input type="text" id="lastName" name="lastName">
-          <label for="customerEmail">Email:</label>
-          <input type="email" id="customerEmail" name="customerEmail" required>
-          {% comment %}
-            <label for="rating">Rating:</label>
-            <input type="number" id="rating" name="rating" step="1" min="1" max="5" required>
-          {% endcomment %}
-          <label for="image">Image:</label>
-          <input type="file" id="image" name="image" accept="image/*">
-          <label for="video">Video:</label>
-          <input type="file" id="video" name="video" accept="video/*">
-          <button type="submit">Submit Review</button>
-          <div id="loading" style="display:none;">Loading...</div>
-        </form>
+        {% render 'review_form' %}
       </div>
     </div>
     <button class="modal-close is-large" aria-label="close">Close</button>
   </div>
 </div>
 
+<script type="module" src="{{ 'js/reviewFormHandler.js' | asset_url }}"></script>
+
 <script
   type="module"
 >
-  import { isFeatureEnabled } from '{{ 'isFeatureEnabled.js' | asset_url }}';
-
-  function capitalizeFirstLetter(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
-  }
+  import { isFeatureEnabled } from '{{ 'js/isFeatureEnabled.js' | asset_url }}';
+  import { fetchSettings } from '{{ 'js/fetchSettings.js' | asset_url }}';
+  import { getSubscriptionPlan } from '{{ 'js/fetchSubscription.js' | asset_url }}';
+  import { fetchRatings, displayRatings } from '{{ 'js/fetchRatings.js' | asset_url }}';
+  import { fetchReviews, displayReviews } from '{{ 'js/fetchReviews.js' | asset_url }}';
+  import { handleFormSubmission } from '{{ 'js/handleFormSubmission.js' | asset_url }}';
+  import { setupModalHandlers } from '{{ 'js/modalHandlers.js' | asset_url }}';
+  import { setupStarRating } from '{{ 'js/starRating.js' | asset_url }}';
 
   document.addEventListener('DOMContentLoaded', async function () {
+    const apiEndpoint = 'https://revolution-thousands-smoking-der.trycloudflare.com';
     const shopName = document.getElementById('shop-name').value;
     const productId = document.getElementById('product-id').value;
-    const productTitle = document.getElementById('product-title').value;
-    
-    const starRating = document.querySelector('.star-rating');
-    const stars = starRating.querySelectorAll('.star');
-    const ratingInput = document.getElementById('rating');
 
-    starRating.addEventListener('click', function(e) {
-      if (e.target.classList.contains('star')) {
-        const rating = e.target.getAttribute('data-rating');
-        ratingInput.value = rating;
-        starRating.setAttribute('data-rating', rating);
-      }
-    });
+    const settings = await fetchSettings(apiEndpoint, shopName);
+    const subscriptionPlan = getSubscriptionPlan();
 
-    starRating.addEventListener('mouseover', function(e) {
-      if (e.target.classList.contains('star')) {
-        const rating = e.target.getAttribute('data-rating');
-        starRating.setAttribute('data-rating', rating);
-      }
-    });
+    setupStarRating();
+    setupModalHandlers();
 
-    starRating.addEventListener('mouseout', function() {
-      starRating.setAttribute('data-rating', ratingInput.value || '0');
-    });
+    await fetchRatings(apiEndpoint, productId, shopName, displayRatings);
+    await fetchReviews(apiEndpoint, productId, shopName, displayReviews);
 
-    console.log("product title : ", productTitle)    
-
-    const apiEndpoint = 'https://ware-shaved-internship-stickers.trycloudflare.com';
-
-    // Fetch settings
-    const settingsResponse = await fetch(`${apiEndpoint}/api/settings?shopName=${shopName}`);
-    const settings = await settingsResponse.json();
-
-    //Fetch subscription plan
-    const subscriptionPlan = "{{ shop.metafields.app_subscription.current_plan }}";
-    console.log("liquid subscriptionPlan", subscriptionPlan)
-
-    const enableSentimentAnalysis = settings.enableSentimentAnalysis;
-    const enableAutomatedResponses = settings.enableAutomatedResponses;
-    const allowMedia = settings.allowMedia;
-
-    let allReviews = []; // Store all reviews globally
-
-    // Fetch global ratings
-    const fetchRatings = async () => {
-      const response = await fetch(`${apiEndpoint}/api/ratings?productId=${productId}&shopName=${shopName}`);
-      const data = await response.json();
-      const { totalReviews, ratingsDistribution } = data;
-    
-      if (totalReviews) {
-        const globalRatings = document.getElementById('global-ratings');
-        globalRatings.innerHTML = `
-          <p><strong>Overall Reviews:</strong> ${totalReviews}</p>
-      <button id="show-all-reviews" class="filter-button">Show All Reviews</button>
-      <div class="ratings-distribution">
-        ${ratingsDistribution.map((rating, index) => `
-          <div class="rating-row" data-rating="${5 - index}">
-            <span class="star-count">${5 - index} stars:</span>
-            <div class="progress-bar-container">
-              <div class="progress-bar" data-percentage="${rating.percentage}"></div>
-            </div>
-            <span class="percentage">${rating.count} (${rating.percentage}%)</span>
-          </div>
-        `).join('')}
-      </div>
-        `;
-    
-        // Animate progress bars
-        setTimeout(() => {
-          document.querySelectorAll('.progress-bar').forEach(bar => {
-            const percentage = bar.getAttribute('data-percentage');
-            bar.style.width = `${percentage}%`;
-          });
-        }, 100);
-
-        // Add click event listeners to rating rows
-    document.querySelectorAll('.rating-row').forEach(row => {
-      row.addEventListener('click', () => {
-        const rating = row.getAttribute('data-rating');
-        filterReviews(rating);
-      });
-    });
-
-    // Add event listener for "Show All Reviews" button
-    document.getElementById('show-all-reviews').addEventListener('click', () => {
-      filterReviews('all');
-    });
-      }
-    };
-
-    {% comment %} await fetchRatings(); {% endcomment %}
-
-    const fetchReviews = async () => {
-      const response = await fetch(`${apiEndpoint}/api/reviews?productId=${productId}&shopName=${shopName}`);
-      allReviews = await response.json(); // Store all reviews
-      displayReviews(allReviews); // Display all reviews initially
-    };
-
-    const displayReviews = (reviews) => {
-      const reviewsList = document.getElementById('reviews-list');
-      reviewsList.innerHTML = '';
-      
-      if (reviews.length === 0) {
-        reviewsList.innerHTML = '<p>No reviews found.</p>';
-      } else {
-        reviews.forEach((review) => {
-          const reviewElement = document.createElement('div');
-          reviewElement.className = 'review-box';
-          const reviewDate = new Date(review.createdAt).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          });
-      
-          const starRating = `
-            <div class="star-rating" data-rating="${review.rating}">
-              ${Array(5).fill().map((_, i) => `<span class="star" data-rating="${i + 1}">★</span>`).join('')}
-            </div>
-          `;
-      
-          reviewElement.innerHTML = `
-            <div class="review-header">
-              <div class="avatar-container">
-                <img src="https://via.placeholder.com/48" alt="Customer Avatar" class="avatar">
-              </div>
-              <div class="review-info">
-                <p class="reviewer-name">${review.firstName} ${review.lastName ? review.lastName : ''}</p>
-                ${starRating}
-                <p class="review-date"><span class="reviewer-name">Reviewed on </span>${reviewDate}</p>
-              </div>
-            </div>
-            <div class="review-content">
-              ${review.imageUrl ? `<img src="${review.imageUrl}" alt="Review Image" class="review-image" />` : ''}
-              ${review.videoUrl ? `<video src="${review.videoUrl}" controls class="review-video"></video>` : ''}
-              <p class="review-comment">${review.comment}</p>
-              ${enableSentimentAnalysis && review.sentiment ? 
-                `<span class="sentiment-badge ${review.sentiment.toLowerCase()}">${capitalizeFirstLetter(review.sentiment)}</span>` 
-                : ''}
-            </div>
-            <div class="review-replies">             
-              ${enableAutomatedResponses && review.AiResponse ? 
-                `
-                <div class="store-reply">
-                <strong>Admin</strong>
-                <p class="review-date">
-                 <span class="reviewer-name">Replied on</span> ${reviewDate}
-                </p>
-                <p>${review.AiResponse}</p>
-                ` : `${review.adminReplies ? review.adminReplies.map(reply =>  
-                `<div class="store-reply">
-                <strong>Admin</strong>
-                <p class="review-date">
-                  <span class="reviewer-name">Replied on</span> ${new
-                  Date(reply.createdAt).toLocaleDateString('en-US', { year: 'numeric', month:
-                  'long', day: 'numeric', })}
-                </p>
-                <p>${reply.reply}</p>`).join('') : ''}`
-               
-              }
-            </div>
-          `;
-          reviewsList.appendChild(reviewElement);
-        });
-      }
-    };
-  
-    
-    const filterReviews = (rating) => {
-      const filteredReviews = rating === 'all' 
-        ? allReviews 
-        : allReviews.filter(review => review.rating === parseInt(rating));
-      displayReviews(filteredReviews);
-    
-      // Update active filter visual indication
-      document.querySelectorAll('.rating-row').forEach(row => {
-        row.classList.remove('active-filter');
-      });
-      if (rating !== 'all') {
-        document.querySelector(`.rating-row[data-rating="${rating}"]`).classList.add('active-filter');
-      }
-    };
-    
-    // Call these functions in your DOMContentLoaded event listener
-    await fetchRatings();
-    await fetchReviews();
-
-    const submitAdminReply = async (reviewId, replyText) => {
-      const response = await fetch(`${apiEndpoint}/api/admin-reply`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ reviewId, reply: replyText }),
-      });
-      if (response.ok) {
-        alert('Reply submitted successfully');
-        await fetchReviews(); // Refresh the reviews list to include the new reply
-      } else {
-        alert('Failed to submit reply');
-      }
-    };
-
-    {% comment %} await fetchReviews(); {% endcomment %}
-
-    // Handle form submission
     document.getElementById('review-form').addEventListener('submit', async function (event) {
       event.preventDefault();
-      const loading = document.getElementById('loading');
-      loading.style.display = 'block';
-
       const formData = new FormData(this);
-
-      formData.append('productId', document.getElementById('product-id').value);
-      formData.append('shopName', document.getElementById('shop-name').value);
-      formData.append('productTitle', document.getElementById('product-title').value);
-
-      // Log FormData entries
-      {% comment %} for (const [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
-      } {% endcomment %}
-
-      if (!allowMedia || !isFeatureEnabled(
-        subscriptionPlan,
-        "Images or Video",
-      )) {
-        formData.delete('image');
-        formData.delete('video');
-      }
-  
-
-      await fetch(`${apiEndpoint}/api/reviews`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      loading.style.display = 'none';
-      document.getElementById('review-form').reset();
-      document.getElementById('open-modal').classList.remove('is-active');
-      await fetchReviews(); // Refresh the reviews list
-      await fetchRatings(); // Refresh the ratings
+      await handleFormSubmission(apiEndpoint, formData, () => fetchReviews(apiEndpoint, productId, shopName, displayReviews));
     });
-
-    // Open modal
-    document.querySelectorAll('.js-modal-trigger').forEach((trigger) => {
-      trigger.addEventListener('click', () => {
-        const modal = document.getElementById(trigger.dataset.target);
-        modal.classList.add('is-active');
-      });
-    });
-
-    // Close modal
-    document.querySelectorAll('.modal-close').forEach((closeButton) => {
-      closeButton.addEventListener('click', () => {
-        document.getElementById('open-modal').classList.remove('is-active');
-      });
-    });
-
-
-    // Conditionally show/hide media inputs
-    if (!allowMedia || !isFeatureEnabled(
-      subscriptionPlan,
-      "Images or Video",
-    )) {
-      document.querySelector('label[for="image"]').style.display = 'none';
-      document.querySelector('#image').style.display = 'none';
-      document.querySelector('label[for="video"]').style.display = 'none';
-      document.querySelector('#video').style.display = 'none';
-    }
   });
 </script>
 

@@ -1,0 +1,20 @@
+<form id="review-form">
+  <input type="hidden" id="product-id" value="{{ block.settings.product.id }}">
+  <input type="hidden" id="shop-name" value="{{ shop.domain }}">
+  <input type="hidden" id="product-title" value="{{ product.title }}">
+  {% render 'stars' %}
+  <label for="comment">Comments:</label>
+  <textarea id="comment" name="comment" required></textarea>
+  <label for="firstName">First Name:</label>
+  <input type="text" id="firstName" name="firstName" required>
+  <label for="lastName">Last Name:</label>
+  <input type="text" id="lastName" name="lastName">
+  <label for="customerEmail">Email:</label>
+  <input type="email" id="customerEmail" name="customerEmail" required>
+  <label for="image">Image:</label>
+  <input type="file" id="image" name="image" accept="image/*">
+  <label for="video">Video:</label>
+  <input type="file" id="video" name="video" accept="video/*">
+  <button type="submit">Submit Review</button>
+  <div id="loading" style="display:none;">Loading...</div>
+</form>
