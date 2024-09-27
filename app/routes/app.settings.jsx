@@ -5,7 +5,7 @@ import { useLoaderData } from "@remix-run/react";
 import prisma from "../db.server";
 import SettingsForm from "../components/Settings/SettingsForm";
 import { authenticate, BASIC_PLAN, PREMIUM_PLAN } from "../shopify.server";
-import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
+// import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
 
 export const loader = async ({ request }) => {
   const { billing, session } = await authenticate.admin(request);
@@ -25,7 +25,7 @@ export const loader = async ({ request }) => {
 
     console.log("\n\n pricing shop name:", shop);
 
-    await updateSubscriptionPlan(shop, subscription.name);
+    // await updateSubscriptionPlan(shop, subscription.name);
 
     if (!shop) {
       return json({ error: "Shop parameter is missing" }, { status: 400 });
@@ -44,7 +44,7 @@ export const loader = async ({ request }) => {
     if (error.message === "No active plan") {
       // Update to Free Plan if no active plan
 
-      await updateSubscriptionPlan(shop, "Free Plan");
+      // await updateSubscriptionPlan(shop, "Free Plan");
 
       const settings = await prisma.settings.findUnique({
         where: { shopId: shop },

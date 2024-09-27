@@ -16,7 +16,7 @@ export const action = async ({ request }) => {
 
   console.log(`Received webhook for topic: ${topic} from shop: ${shop}`);
 
-  console.log("payload", payload);
+  // console.log("payload", payload);
 
   switch (topic) {
     case "APP_UNINSTALLED":

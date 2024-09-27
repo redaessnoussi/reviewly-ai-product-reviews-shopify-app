@@ -1,5 +1,7 @@
 // app/models/subscription.server.js
 
+import prisma from "../db.server";
+
 // Function to get the subscription status of the shop using Shopify's built-in GraphQL function
 // app/models/subscription.server.js
 
@@ -135,5 +137,39 @@ export async function updateSubscriptionMetafield(graphql, shop, plan) {
   } catch (error) {
     console.error(`Failed to update metafield for shop: ${shop}`, error);
     throw new Error(`Failed to update metafield: ${error.message}`);
+  }
+}
+
+export async function updateSubscriptionPlan(shop, subscription) {
+  await prisma.shopSubscription.upsert({
+    where: { shopId: shop },
+    update: { subscription },
+    create: { shopId: shop, subscription },
+  });
+}
+
+// Function to ensure the shop record exists
+export async function ensureShopRecord(shop) {
+  let shopName = shop.replace(".myshopify.com", "");
+  return await prisma.shop.upsert({
+    where: { id: shop },
+    update: {},
+    create: {
+      id: shop,
+      name: shopName,
+      shopifyDomain: shop,
+    },
+  });
+}
+
+export async function seedSubscriptionPlans(defaultPlan) {
+  try {
+    for (const plan of defaultPlan) {
+      const { shop, subscription } = plan;
+      await ensureShopRecord(shop);
+      await updateSubscriptionPlan(shop, subscription);
+    }
+  } catch (e) {
+    console.log("models/subscription.server.js", e);
   }
 }

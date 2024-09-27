@@ -3,11 +3,11 @@
 client_id = "6f355af6c9e006c8557d57d8c2566fcb"
 name = "Reviewly"
 handle = "reviewly-ai"
-application_url = "https://revolution-thousands-smoking-der.trycloudflare.com"
+application_url = "https://horizon-conceptual-nba-fonts.trycloudflare.com"
 embedded = true
 
 [build]
-automatically_update_urls_on_dev = false
+automatically_update_urls_on_dev = true
 dev_store_url = "quickstart-e1c43354.myshopify.com"
 include_config_on_deploy = true
 
@@ -17,9 +17,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://revolution-thousands-smoking-der.trycloudflare.com/auth/callback",
-  "https://revolution-thousands-smoking-der.trycloudflare.com/auth/shopify/callback",
-  "https://revolution-thousands-smoking-der.trycloudflare.com/api/auth/callback"
+  "https://horizon-conceptual-nba-fonts.trycloudflare.com/auth/callback",
+  "https://horizon-conceptual-nba-fonts.trycloudflare.com/auth/shopify/callback",
+  "https://horizon-conceptual-nba-fonts.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

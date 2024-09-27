@@ -32,7 +32,7 @@ import { Line } from "react-chartjs-2";
 import { json, useLoaderData, useNavigate } from "@remix-run/react";
 import { isFeatureEnabled } from "../utils/isFeatureEnabled";
 import { authenticate, BASIC_PLAN, PREMIUM_PLAN } from "../shopify.server";
-import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
+// import { updateSubscriptionPlan } from "../utils/subscriptionPlan";
 import RatingStars from "../components/Home/RatingStars";
 
 ChartJS.register(
@@ -65,13 +65,13 @@ export async function loader({ request }) {
 
     console.log("pricing shop name:", shop);
 
-    await updateSubscriptionPlan(shop, subscription.name);
+    // await updateSubscriptionPlan(shop, subscription.name);
 
     return json({ plan: subscription });
   } catch (error) {
     if (error.message === "No active plan") {
       // Update to Free Plan if no active plan
-      await updateSubscriptionPlan(shop, "Free Plan");
+      // await updateSubscriptionPlan(shop, "Free Plan");
 
       return json({ plan: { name: "Free Plan" } });
     }

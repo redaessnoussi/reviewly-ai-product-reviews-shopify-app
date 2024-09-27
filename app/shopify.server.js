@@ -9,6 +9,11 @@ import {
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import { restResources } from "@shopify/shopify-api/rest/admin/2024-04";
 import prisma from "./db.server";
+import {
+  ensureShopRecord,
+  updateSubscriptionPlan,
+} from "./models/subscription.server";
+import { ensureDefaultSettings } from "./models/settings.server";
 
 export const BASIC_PLAN = "Basic Plan";
 export const PREMIUM_PLAN = "Premium Plan";
@@ -48,7 +53,28 @@ const shopify = shopifyApp({
   },
   hooks: {
     afterAuth: async ({ session }) => {
+      // Register webhooks
       shopify.registerWebhooks({ session });
+
+      // Seeding logic
+      const shop = session.shop;
+      console.log("Seeding app with default settings for shop:", shop);
+
+      try {
+        // Ensure the shop record exists
+        await ensureShopRecord(shop);
+
+        // Seed default subscription plan
+        const defaultSubscription = "Free Plan";
+        await updateSubscriptionPlan(shop, defaultSubscription);
+
+        // Seed default settings
+        await ensureDefaultSettings(shop); // Add this line
+
+        console.log("Seeding completed successfully.");
+      } catch (error) {
+        console.error("Error during data seeding:", error);
+      }
     },
   },
   future: {
